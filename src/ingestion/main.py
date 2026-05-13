@@ -40,32 +40,33 @@ def process_file(filepath: Path, embedding_model, pc, index) -> dict:
             vector_id = f"{source}_{filepath.stem}_chunk_{idx:04d}"
 
             dense = get_dense_embedding(embedding_model, chunk.page_content)
-        #     sparse_indices, sparse_values = get_sparse_embedding(pc, chunk.page_content)
+            print(f'Embeddings generated')
+            sparse_indices, sparse_values = get_sparse_embedding(pc, chunk.page_content)
 
-        #     metadata = {
-        #         "source": source,
-        #         "source_path": "/".join(filepath.parts[7:]),
-        #         "file_name": filepath.name,
-        #         "chunk_index": idx,
-        #         "chunk_size": len(chunk.page_content),
-        #         "text": chunk.page_content,
-        #     }
+            metadata = {
+                "source": source,
+                "source_path": "/".join(filepath.parts[7:]),
+                "file_name": filepath.name,
+                "chunk_index": idx,
+                "chunk_size": len(chunk.page_content),
+                "text": chunk.page_content,
+            }
 
-        #     for key in set(metadata_keys + hybrid_keys):
-        #         if key in json_data:
-        #             metadata[key] = json_data[key]
+            for key in set(metadata_keys + hybrid_keys):
+                if key in json_data:
+                    metadata[key] = json_data[key]
 
-        #     vectors.append({
-        #         "id": vector_id,
-        #         "values": dense,
-        #         "sparse_values": {
-        #             "indices": sparse_indices,
-        #             "values": sparse_values
-        #         },
-        #         "metadata": metadata
-        #     })
+            vectors.append({
+                "id": vector_id,
+                "values": dense,
+                "sparse_values": {
+                    "indices": sparse_indices,
+                    "values": sparse_values
+                },
+                "metadata": metadata
+            })
 
-        # upsert_vectors(index, vectors)
+        upsert_vectors(index, vectors)
 
         return {
             "input_file": str(filepath),

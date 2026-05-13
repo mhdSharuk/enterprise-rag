@@ -52,3 +52,6 @@ data.zip
 .claude/
 zip_data.zip
 data/
+
+rag_venv/
+model_store/

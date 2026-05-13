@@ -1,0 +1,10 @@
+pinecone
+sentence-transformers
+transformers
+torch
+langchain-text-splitters
+langchain-core
+tqdm
+numpy
+langfuse
+dotenv

@@ -4,7 +4,6 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from src.ingestion.config import CHUNK_SIZE, CHUNK_OVERLAP
 
-
 def convert_to_text(json_data: dict) -> str:
     lines = []
     try:
