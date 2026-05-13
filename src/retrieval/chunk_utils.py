@@ -1,7 +1,6 @@
 import re
 from tqdm import tqdm
 
-
 def merge_ranked_chunks(rerank_result) -> list[dict]:
     docs = [
         {

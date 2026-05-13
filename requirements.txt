@@ -8,3 +8,8 @@ tqdm
 numpy
 langfuse
 dotenv
+
+optimum[onnxruntime]
+onnxruntime
+ollama
+
