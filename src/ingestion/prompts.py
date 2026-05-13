@@ -12,15 +12,15 @@ langfuse = Langfuse(
 KEY_EXTRACTION_PROMPT = None
 
 if langfuse.auth_check():
-    print("Langfuse is authenticated!")
+    logger.info("Langfuse is authenticated!")
 
 try:
     prompt_obj = langfuse.get_prompt(KEY_EXTRACTION_PROMPT_NAME, label='production')
     KEY_EXTRACTION_PROMPT = prompt_obj.prompt
     
 except Exception as err:
-    print(f'Error occured')
-    print(err)
+    logger.error(f'Error occured')
+    logger.error(err)
 
 # prompt_obj = langfuse.get_prompt('markdown_conversion_prompt', label='production')
 # MARKDOWN_CONVERSION_PROMPT = prompt_obj.prompt

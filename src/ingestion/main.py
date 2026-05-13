@@ -7,6 +7,7 @@ import traceback
 from tqdm import tqdm
 from pathlib import Path
 
+from src.utils.logger import logger
 from src.ingestion.vector_store import upsert_vectors
 from src.ingestion.embedder import load_embedding_model
 from src.ingestion.vector_store import get_pinecone_index
@@ -39,8 +40,7 @@ def process_file(filepath: Path, embedding_model, pc, index) -> dict:
         for idx, chunk in enumerate(chunks):
             vector_id = f"{source}_{filepath.stem}_chunk_{idx:04d}"
 
-            dense = get_dense_embedding(embedding_model, chunk.page_content)
-            print(f'Embeddings generated')
+            dense = get_dense_embedding(embedding_model, chunk.page_content)            
             sparse_indices, sparse_values = get_sparse_embedding(pc, chunk.page_content)
 
             metadata = {
@@ -76,7 +76,7 @@ def process_file(filepath: Path, embedding_model, pc, index) -> dict:
         }
 
     except Exception:
-        print(f"process_file error ({filepath}): {traceback.format_exc()}")
+        logger.error(f"process_file error ({filepath}): {traceback.format_exc()}")
         raise
 
 
@@ -106,13 +106,13 @@ if __name__ == "__main__":
 
     summary = process_all_files(data_dir, embedding_model, pc, index)
 
-    print(f"\nProcessed {len(summary['results'])} files successfully")
+    logger.info(f"\nProcessed {len(summary['results'])} files successfully")
 
     gc.collect()
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
 
     if summary["errors"]:
-        print(f"Errors: {len(summary['errors'])}")
+        logger.error(f"Errors: {len(summary['errors'])}")
         for err in summary["errors"]:
-            print(f"  - {err['file']}: {err['error']}")
+            logger.error(f"  - {err['file']}: {err['error']}")
