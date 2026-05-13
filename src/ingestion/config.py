@@ -1,0 +1,12 @@
+import os
+
+PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
+PINECONE_INDEX_NAME = os.getenv("PINECONE_INDEX_NAME")
+PINECONE_DIMENSION = 1024
+PINECONE_METRIC = "dotproduct"
+PINECONE_REGION = "us-east-1"
+PINECONE_CLOUD = "aws"
+
+EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", 'BAAI/bge-large-en-v1.5' )
+
+HF_TOKEN = os.getenv("HF_TOKEN")
