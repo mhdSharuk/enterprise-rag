@@ -6,6 +6,7 @@ from optimum.onnxruntime import ORTModelForSequenceClassification
 from transformers import AutoTokenizer, logging as transformers_logging
 
 from src.utils.logger import logger
+from src.utils.device import get_onnx_provider
 from src.retrieval.config import (RERANKING_MODEL, RERANKING_ONNX_FILE, 
                                   HF_TOKEN, RERANK_TOP_N, RERANK_THRESHOLD)
 
@@ -36,28 +37,39 @@ class RerankResult:
 
 
 def load_reranker():
+    provider = get_onnx_provider()
+
     if RERANKER_PATH.exists():
         logger.info(f"Loading reranker from {RERANKER_PATH}")
 
-        tokenizer = AutoTokenizer.from_pretrained(str(RERANKER_PATH))
+        tokenizer = AutoTokenizer.from_pretrained(
+          str(RERANKER_PATH),
+          fix_mistral_regex=True
+        )
 
         local_file = "model_quantized.onnx" if (RERANKER_PATH / "model_quantized.onnx").exists() else "model.onnx"
         model = ORTModelForSequenceClassification.from_pretrained(
             str(RERANKER_PATH),
             file_name=local_file,
-            token=HF_TOKEN
+            token=HF_TOKEN,
+            provider=provider
         )
         return tokenizer, model
 
     logger.info(f"Exporting reranker {RERANKING_MODEL} to ONNX ...")
     MODEL_STORE.mkdir(parents=True, exist_ok=True)
 
-    tokenizer = AutoTokenizer.from_pretrained(RERANKING_MODEL, token=HF_TOKEN)
+    tokenizer = AutoTokenizer.from_pretrained(
+      RERANKING_MODEL, 
+      token=HF_TOKEN,
+      fix_mistral_regex=True
+    )
     model = ORTModelForSequenceClassification.from_pretrained(
         RERANKING_MODEL,
         subfolder="onnx",
         file_name = RERANKING_ONNX_FILE,
-        token=HF_TOKEN
+        token=HF_TOKEN,
+        provider=provider
     )
 
     model.save_pretrained(str(RERANKER_PATH))

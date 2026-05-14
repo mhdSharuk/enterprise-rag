@@ -1,5 +1,5 @@
 pinecone
-sentence-transformers
+sentence-transformers[gpu]
 transformers
 torch
 langchain-text-splitters
@@ -9,7 +9,4 @@ numpy
 langfuse
 dotenv
 
-optimum[onnxruntime]
-onnxruntime
-ollama
-
+optimum[onnxruntime-gpu]

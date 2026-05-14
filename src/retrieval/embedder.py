@@ -8,6 +8,7 @@ from transformers import AutoTokenizer, logging as transformers_logging
 # from sentence_transformers import SentenceTransformer
 
 from src.utils.logger import logger
+from src.utils.device import get_onnx_provider
 from src.retrieval.config import (EMBEDDING_MODEL, HF_TOKEN, EMBEDDING_ONNX_FILE)
 
 MODEL_STORE = Path("model_store")
@@ -22,29 +23,40 @@ def load_embedding_model():
     if embedding_model is not None:
         return embedding_tokenizer, embedding_model
 
+    provider = get_onnx_provider()
+
     if EMBEDDER_PATH.exists():
         logger.info(f"Loading ONNX embedding model from {EMBEDDER_PATH}")
         
-        embedding_tokenizer = AutoTokenizer.from_pretrained(str(EMBEDDER_PATH))
+        embedding_tokenizer = AutoTokenizer.from_pretrained(
+          str(EMBEDDER_PATH),
+          fix_mistral_regex=True
+        )
         
         local_file = "model_quantized.onnx" if (EMBEDDER_PATH / "model_quantized.onnx").exists() else "model.onnx"
         embedding_model = ORTModelForFeatureExtraction.from_pretrained(
             str(EMBEDDER_PATH),
             file_name = local_file,
-            token = HF_TOKEN
+            token = HF_TOKEN,
+            provider=provider
         )
         return embedding_tokenizer, embedding_model 
 
     logger.info(f"Exporting embedding model {EMBEDDING_MODEL} to ONNX ...")
     EMBEDDER_PATH.mkdir(parents=True, exist_ok=True)
 
-    embedding_tokenizer = AutoTokenizer.from_pretrained(EMBEDDING_MODEL, token=HF_TOKEN)
+    embedding_tokenizer = AutoTokenizer.from_pretrained(
+      EMBEDDING_MODEL, 
+      token=HF_TOKEN,
+      fix_mistral_regex=True
+    )
     
     embedding_model = ORTModelForFeatureExtraction.from_pretrained(
         EMBEDDING_MODEL,
         subfolder="onnx",
         file_name = EMBEDDING_ONNX_FILE,
-        token=HF_TOKEN
+        token=HF_TOKEN,
+        provider=provider
     )
 
     embedding_model.save_pretrained(str(EMBEDDER_PATH))
