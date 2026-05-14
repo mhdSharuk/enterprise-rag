@@ -52,39 +52,31 @@ def query_all_sources(index, dense_vector: list, sparse_vector: dict | None = No
 
 def fetch_vectors_by_id(index, ids: list[str]) -> dict:
 
-    # documents = []
-    # futures = []
-    # dummy_vector = [0.0] * 1024 
+    documents = []
+    futures = []
     
-    # for id_ in ids:
-    #     future = index.query(
-    #         top_k=1,
-    #         vector=dummy_vector,
-    #         include_values=False,
-    #         include_metadata=True,
-    #         filter={"source": {"$id": id_}},
-    #         async_req=True
-    #     )
-    #     futures.append(future)
+    for id_ in ids:
+        future = index.query(
+            id=id_,       
+            top_k=1,                   
+            include_values=False,  
+            include_metadata=True,
+            async_req=True
+        )
+        futures.append(future)
 
-    # for future in futures:
-    #     response = future.get()
-    #     matches = response.to_dict()["matches"]
-    #     # docs = [
-    #     #     {
-    #     #         "id": m["id"],
-    #     #         "score": m["score"],
-    #     #         "chunk_text": m["metadata"]["text"],
-    #     #         'doc_id': m['metadata']['dataset_doc_uuid']
-    #     #     }
-    #     #     for m in matches
-    #     # ]
-    #     documents.extend(matches)
+    for future in futures:
+        response = future.get()
+        matches = response.to_dict()["matches"]
+        docs = [
+            {
+                "id": m["id"],
+                "score": m["score"],
+                "chunk_text": m["metadata"]["text"],
+                'doc_id': m['metadata']['dataset_doc_uuid']
+            }
+            for m in matches
+        ]
+        documents.extend(docs)
 
-    # return documents
-
-    response = index.fetch(ids=ids, namespace="")
-    return response
-
-    # response = index.fetch(ids=ids, namespace="", async_req=True)
-    # return response.get()
+    return documents

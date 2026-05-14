@@ -102,39 +102,16 @@ def retrieve(query,
     else:
         reranked = rerank_pinecone(pc, query, documents, top_n=rerank_top_n)
 
-    # merged = merge_ranked_chunks(reranked)
-    # print(f'Merged')
-    # for m in merged:
-    #     print(m['id'])
-    #     print(m['score'])
-    #     print(m['chunk_range'])
-    #     print(m['doc_id'])
-    #     print(m['text'][:20])
-    #     print('='*20)
-    # return reranked
-    
     neighbour_ids = list(get_neighbour_chunk_ids(reranked.data))
     refetched = fetch_vectors_by_id(index, neighbour_ids)
+    merged = merge_ranked_chunks(refetched)
 
-    print(refetched.vectors.keys())
-
-    # extra_chunks = []
-    # for vec_id, vec_data in refetched.vectors.items():
-    #     if not any(m["id"] == vec_id for m in merged):
-    #         extra_chunks.append({
-    #             "id": vec_id,
-    #             "chunk_range": None,
-    #             "score": 0.0,
-    #             "text": vec_data.metadata.get("text", "")
-    #         })
-
-    # return merged + extra_chunks
+    return merged
 
 
 if __name__ == "__main__":
 
     pc, index = get_pinecone_index()
-    # embedding_model = load_embedding_model()
     dense_embedding_tokenizer, dense_embedding_model = load_embedding_model()
     reranker = load_reranker() if LOCAL_RERANK else None
 
@@ -149,15 +126,10 @@ if __name__ == "__main__":
                     pc, index, 
                     reranker=reranker)
 
+    print(results)
+
     # results = retrieve(query, 
     #                    embedding_model, 
     #                    pc, 
     #                    index, 
     #                    reranker=reranker)
-
-    # print(f"\nTop {len(results)} results:\n")
-    # for i, doc in enumerate(results, 1):
-    #     chunk_info = f"chunks {doc['chunk_range']}" if doc["chunk_range"] else "neighbour chunk"
-    #     print(f"[{i}] {doc['id']} ({chunk_info}) | score: {doc['score']:.4f}")
-    #     print(f"    {doc['text'][:200].strip()}...")
-    #     print()

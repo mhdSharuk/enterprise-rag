@@ -55,3 +55,4 @@ data/
 
 rag_venv/
 model_store/
+eval_set.json
