@@ -1,16 +1,18 @@
 import re
 from tqdm import tqdm
+from src.retrieval.config import RERANK_THRESHOLD
 
 def merge_ranked_chunks(rerank_result) -> list[dict]:
     docs = [
         {
-            "id": d["document"]["id"],
+            "id": d["id"],
             "score": d["score"],
-            "text": d["document"].get("chunk_text", ""),
-            "base_id": d["document"]["id"].rsplit("_chunk", 1)[0],
-            "chunk_num": int(d["document"]["id"].rsplit("_", 1)[-1])
+            "text": d.get("chunk_text", ""),
+            "base_id": d["id"].rsplit("_chunk", 1)[0],
+            "chunk_num": int(d["id"].rsplit("_", 1)[-1])
         }
         for d in rerank_result.data
+        if d['score'] > RERANK_THRESHOLD
     ]
 
     grouped = {}
@@ -35,6 +37,7 @@ def merge_ranked_chunks(rerank_result) -> list[dict]:
     for group in merged_groups:
         merged.append({
             "id": group[0]["base_id"],
+            "doc_id": group[0]["base_id"],
             "chunk_range": (group[0]["chunk_num"], group[-1]["chunk_num"]),
             "score": max(c["score"] for c in group),
             "text": " ".join(c["text"] for c in group)
@@ -44,7 +47,7 @@ def merge_ranked_chunks(rerank_result) -> list[dict]:
 
 
 def get_neighbour_chunk_ids(rerank_result_data: list[dict]) -> set[str]:
-    retrieved_ids = {d["document"]["id"] for d in rerank_result_data}
+    retrieved_ids = {d["id"] for d in rerank_result_data}
 
     neighbour_ids = set()
     for chunk_id in retrieved_ids:
