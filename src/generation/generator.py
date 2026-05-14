@@ -17,7 +17,8 @@ def generate(query: str, merged_docs: list[dict], tokenizer, model, max_new_toke
     streamer = TextIteratorStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True)
 
     generation_kwargs = dict(
-        **inputs,
+        input_ids=inputs["input_ids"],
+        attention_mask=inputs["attention_mask"],
         max_new_tokens=max_new_tokens,
         do_sample=False,
         repetition_penalty=1.1,
