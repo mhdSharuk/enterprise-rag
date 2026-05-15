@@ -6,7 +6,7 @@ from optimum.onnxruntime import ORTModelForSequenceClassification
 from transformers import AutoTokenizer, logging as transformers_logging
 
 from src.utils.logger import logger
-from src.utils.device import get_onnx_provider
+from src.utils.check_device import get_onnx_provider
 from src.retrieval.config import (RERANKING_MODEL, RERANKING_ONNX_FILE, 
                                   HF_TOKEN, RERANK_TOP_N, RERANK_THRESHOLD)
 

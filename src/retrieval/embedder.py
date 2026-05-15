@@ -8,7 +8,7 @@ from transformers import AutoTokenizer, logging as transformers_logging
 # from sentence_transformers import SentenceTransformer
 
 from src.utils.logger import logger
-from src.utils.device import get_onnx_provider
+from src.utils.check_device import get_onnx_provider
 from src.retrieval.config import (EMBEDDING_MODEL, HF_TOKEN, EMBEDDING_ONNX_FILE)
 
 MODEL_STORE = Path("model_store")

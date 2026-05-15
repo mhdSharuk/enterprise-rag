@@ -1,5 +1,6 @@
 from langfuse import Langfuse
 
+from src.utils.logger import logger
 from src.ingestion.config import (LANGFUSE_BASE_URL, LANGFUSE_PUBLIC_KEY, 
                                   LANGFUSE_SECRET_KEY, KEY_EXTRACTION_PROMPT_NAME)
 

@@ -3,6 +3,7 @@ from pathlib import Path
 from pinecone import Pinecone
 from sentence_transformers import SentenceTransformer
 
+from src.utils.logger import logger
 from src.ingestion.config import EMBEDDING_MODEL, HF_TOKEN
 
 MODEL_STORE = Path("model_store")
