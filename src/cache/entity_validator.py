@@ -26,6 +26,8 @@ def load_gliner_model():
     logger.info(f"Saved GLiNER model to {GLINER_PATH}")
     return gliner_model
 
+_ = load_gliner_model()
+
 def extract_entities(query: str, model=None) -> list[dict]:
     if model is None:
         model = load_gliner_model()

@@ -8,12 +8,13 @@ from src.retrieval.config import (PINECONE_API_KEY, PINECONE_INDEX_NAME,
 
 def get_pinecone_index():
     try:
+        logger.info("Connecting to Pinecone...")
         pc = Pinecone(api_key=PINECONE_API_KEY)
         return pc, pc.Index(PINECONE_INDEX_NAME) 
     
     except Exception as error:
-        print(f'Error occured')
-        print(error)
+        logger.error(f'Error occured')
+        logger.error(error)
 
         return None, None
 
@@ -21,6 +22,9 @@ def get_pinecone_index():
 def query_all_sources(index, dense_vector: list, sparse_vector: dict | None = None, top_k: int = TOP_K_PER_SOURCE) -> list[dict]:
     futures = []
     for source in tqdm(SOURCES, desc="Querying sources"):
+
+        logger.info(f"Querying source: {source}")
+        
         future = index.query(
             top_k=top_k,
             vector=dense_vector,

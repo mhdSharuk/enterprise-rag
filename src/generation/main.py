@@ -15,7 +15,7 @@ def run_query(query: str) -> str:
     dense_embedding_tokenizer, dense_embedding_model = load_embedding_model()
     reranker = load_reranker() if LOCAL_RERANK else None
 
-    tokenizer, model = load_model()
+    # tokenizer, model = load_model()
 
     hit, cached_response = check_cache(
         query=query,
@@ -24,8 +24,8 @@ def run_query(query: str) -> str:
         embedding_model=dense_embedding_model
     )
 
-    # if hit:
-    #     return cached_response
+    if hit:
+        return cached_response
 
     # merged_docs = retrieve(
     #     query=query,
@@ -36,9 +36,9 @@ def run_query(query: str) -> str:
     #     reranker=reranker
     # )
 
-    # answer = generate(query, merged_docs, tokenizer, model)
+    answer = f'Answer generated for query : {query}'#generate(query, merged_docs, tokenizer, model)
 
-    # store_in_cache(index, query, answer, dense_embedding_tokenizer, dense_embedding_model)
+    store_in_cache(index, query, answer, dense_embedding_tokenizer, dense_embedding_model)
 
     return answer
 
@@ -51,5 +51,5 @@ if __name__ == "__main__":
     )
 
     answer = run_query(query)
-    # print("\n=== Answer ===")
-    # print(answer)
+    print("\n=== Answer ===")
+    print(answer)
