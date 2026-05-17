@@ -33,6 +33,6 @@ def split_text(text: str, chunk_size: int = CHUNK_SIZE,
     splitter = RecursiveCharacterTextSplitter(
         chunk_size = chunk_size,
         chunk_overlap = chunk_overlap,
-        separators = ["\n", " ", ", ", ". "],
+        separators = ["\n\n", "\n", ". ", " ", ""],
     )
     return splitter.split_documents([Document(page_content=text)])
