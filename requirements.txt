@@ -10,3 +10,4 @@ langfuse
 dotenv
 
 optimum[onnxruntime-gpu]
+gliner
