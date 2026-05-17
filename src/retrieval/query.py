@@ -1,19 +1,19 @@
+import time
 from src.retrieval.reranker import rerank_pinecone, rerank_local, load_reranker
-from src.retrieval.chunk_utils import merge_ranked_chunks, get_neighbour_chunk_ids
-from src.retrieval.vector_store import query_all_sources, fetch_vectors_by_id, get_pinecone_index
+from src.retrieval.chunk_utils import merge_ranked_chunks
+from src.retrieval.vector_store import query_all_sources, get_pinecone_index
 from src.retrieval.embedder import get_dense_embedding, hybrid_score_norm, load_embedding_model, get_sparse_embedding
 
 from src.retrieval.config import HYBRID_ALPHA, RERANK_TOP_N, LOCAL_RERANK
 
-def retrieve(query, 
+def retrieve(query,
             embedding_tokenizer,
-            embedding_model, 
+            embedding_model,
             pc, index,
             reranker = None,
             use_sparse = False,
             rerank_top_n = RERANK_TOP_N) -> list[dict]:
 
-    # dense = get_dense_embedding(embedding_model, query)
     dense = get_dense_embedding(embedding_tokenizer, embedding_model, query)
 
     if use_sparse:
@@ -31,9 +31,7 @@ def retrieve(query,
     else:
         reranked = rerank_pinecone(pc, query, documents, top_n=rerank_top_n)
 
-    neighbour_ids = list(get_neighbour_chunk_ids(reranked.data))
-    refetched = fetch_vectors_by_id(index, neighbour_ids)
-    merged = merge_ranked_chunks(refetched)
+    merged = merge_ranked_chunks(reranked.data)
 
     return merged
 
@@ -49,10 +47,19 @@ if __name__ == "__main__":
         print("No query provided.")
         exit(1)
 
+    query = query.strip()
+
+    start_time = time.perf_counter()
     results = retrieve(query, 
                     dense_embedding_tokenizer, 
                     dense_embedding_model,
                     pc, index, 
                     reranker=reranker)
+    end_time = time.perf_counter()
 
-    print(results)
+
+    print(f'Time taken: {end_time - start_time:.2f} seconds')
+    print('Results : ')
+    for doc in results:
+        print(f" - {doc['id']}")
+

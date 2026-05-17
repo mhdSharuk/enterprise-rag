@@ -37,7 +37,8 @@
         "source_types": [
             "linear"
         ],
-        "question": "What are the acceptance criteria for the project introducing an algorithm to generate interactive UI color states and a Kappa-style elevation scale for dense table and grid components?",
+        "question": 
+What are the acceptance criteria for the project introducing an algorithm to generate interactive UI color states and a Kappa-style elevation scale for dense table and grid components,
         "expected_doc_ids": {
             "linear/design/DES-72681-develop-interactive-tone-derivatives-and-kappa-elevation-scale-for-data-grids.json": "dsid_3fd6af404fae48e6b8ea5a57875ef78f"
         },

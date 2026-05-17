@@ -47,10 +47,9 @@ def load_reranker():
           fix_mistral_regex=True
         )
 
-        local_file = "model_quantized.onnx" if (RERANKER_PATH / "model_quantized.onnx").exists() else "model.onnx"
         model = ORTModelForSequenceClassification.from_pretrained(
             str(RERANKER_PATH),
-            file_name=local_file,
+            file_name=RERANKING_ONNX_FILE,
             token=HF_TOKEN,
             provider=provider
         )

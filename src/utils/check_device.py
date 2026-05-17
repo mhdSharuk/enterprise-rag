@@ -1,10 +1,15 @@
+import torch
 import onnxruntime as ort
 from src.utils.logger import logger
 
 def get_onnx_provider() -> str:
     """Returns CUDAExecutionProvider if GPU is available, else CPUExecutionProvider."""
-    available = ort.get_available_providers()
-    if "CUDAExecutionProvider" in available:
+
+    cuda_available = torch.cuda.is_available()
+    available_providers = ort.get_available_providers()
+
+    if "CUDAExecutionProvider" in available_providers and cuda_available:
+        
         logger.info("GPU detected. Using CUDAExecutionProvider.")
         return "CUDAExecutionProvider"
     
