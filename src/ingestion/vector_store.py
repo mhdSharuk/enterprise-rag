@@ -1,7 +1,8 @@
 from pinecone import Pinecone, ServerlessSpec
 from src.ingestion.config import (PINECONE_API_KEY, PINECONE_INDEX_NAME,
                                   PINECONE_DIMENSION, PINECONE_METRIC, 
-                                  PINECONE_REGION, PINECONE_CLOUD)
+                                  PINECONE_REGION, PINECONE_CLOUD,
+                                  PINECONE_NAMESPACE)
 
 def get_pinecone_index():
     pc = Pinecone(api_key=PINECONE_API_KEY)
@@ -19,4 +20,4 @@ def get_pinecone_index():
 
 def upsert_vectors(index, vectors: list[dict]):
     if vectors:
-        index.upsert(vectors=vectors)
+        index.upsert(vectors=vectors, namespace=PINECONE_NAMESPACE)
