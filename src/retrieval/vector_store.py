@@ -3,7 +3,7 @@ from pinecone import Pinecone, ServerlessSpec
 
 from src.utils.logger import logger
 from src.retrieval.config import (PINECONE_API_KEY, PINECONE_INDEX_NAME, 
-                                  SOURCES, TOP_K_PER_SOURCE)
+                                  SOURCES, TOP_K_PER_SOURCE, PINECONE_NAMESPACE)
 
 
 def get_pinecone_index():
@@ -28,7 +28,8 @@ def query_all_sources(index, dense_vector: list, sparse_vector: dict | None = No
             include_values=False,
             include_metadata=True,
             filter={"source": {"$eq": source}},
-            async_req=True
+            async_req=True,
+            namespace=PINECONE_NAMESPACE
         )
         futures.append(future)
 
@@ -61,7 +62,8 @@ def fetch_vectors_by_id(index, ids: list[str]) -> dict:
             top_k=1,                   
             include_values=False,  
             include_metadata=True,
-            async_req=True
+            async_req=True,
+            namespace=PINECONE_NAMESPACE
         )
         futures.append(future)
 

@@ -7,6 +7,7 @@ load_dotenv(dotenv_path=env_path, override=True)
 
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
 PINECONE_INDEX_NAME = os.getenv("PINECONE_INDEX_NAME")
+PINECONE_NAMESPACE = os.getenv("PINECONE_NAMESPACE")
 
 HF_TOKEN = os.getenv("HF_TOKEN")
 
