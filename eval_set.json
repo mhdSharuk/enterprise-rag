@@ -58,7 +58,8 @@ What are the acceptance criteria for the project introducing an algorithm to gen
         "source_types": [
             "fireflies"
         ],
-        "question": "In the meeting about onboarding a SaaS product to Google Cloud Marketplace, what did the GCP team recommend for handling delays where a new subscription entitlement is not immediately available during the customer onboarding flow?",
+        "question": "
+In the meeting about onboarding a SaaS product to Google Cloud Marketplace, what did the GCP team recommend for handling delays where a new subscription entitlement is not immediately available during the customer onboarding flow?
         "expected_doc_ids": {
             "fireflies/2026-01-16-gcp-marketplace-onboarding-and-billing-review.json": "dsid_6c4c1c875e704f09b4d791d64d7bc7e5"
         },
@@ -102,7 +103,12 @@ What failover sequence and recovery targets did MedThink specify for handling an
         "expected_doc_ids": {
             "google_drive/shared_drives/policy-engine-failover-extensions-draft.json": "dsid_184be937d34a412ab5e61366d54d8ed6"
         },
-        "gold_answer": "The draft proposes this canonical v1 signal priority order: (1) authoritative Reachability DOWN \u2192 FAILOVER (unless no healthy fallback), (2) fast/severe 5xx error burn \u2192 FAILOVER or PARTIAL_SHIFT depending on blast radius and capacity, (3) tail latency burn \u2192 PARTIAL_SHIFT first, escalating to FAILOVER if corroborated and sustained, (4) capacity exhaustion/hard gate \u2192 HOLD plus load shed (avoid shifting into constrained regions), and (5) control plane degradation \u2192 HOLD to avoid rapid flips/oscillation.",
+        "gold_answer": "The draft proposes this canonical v1 signal priority order: 
+                            (1) authoritative Reachability DOWN \u2192 FAILOVER (unless no healthy fallback), 
+                            (2) fast/severe 5xx error burn \u2192 FAILOVER or PARTIAL_SHIFT depending on blast radius and capacity, 
+                            (3) tail latency burn \u2192 PARTIAL_SHIFT first, escalating to FAILOVER if corroborated and sustained, 
+                            (4) capacity exhaustion/hard gate \u2192 HOLD plus load shed (avoid shifting into constrained regions), and 
+                            (5) control plane degradation \u2192 HOLD to avoid rapid flips/oscillation.",
         "answer_facts": [
             "The draft spec proposes a canonical v1 priority order for evaluating failure signals when deciding whether to shift traffic or fail over.",
             "Highest priority is authoritative Reachability DOWN, which triggers FAILOVER unless there is no healthy fallback.",

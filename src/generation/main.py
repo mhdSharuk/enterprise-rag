@@ -44,20 +44,24 @@ def run_query(query) -> str:
 
     answer = f'Answer generated for query : {query}'#generate(query, merged_docs, tokenizer, model)
 
+    # print(merged_docs[0])
+    # print(merged_docs[0]['text'])
 
-    store_in_cache(index, query, answer, dense_embedding, sparse_embedding)
+    # store_in_cache(index, query, answer, dense_embedding, sparse_embedding)
 
-    return answer
+    # return answer
 
 
 if __name__ == "__main__":
-    query = "In the draft specification regarding the extended routing policy engine for automated regional failover, how are the various failure signals prioritized for traffic shifting and failover decisions?"
-    
+    # query = "What are the specific gate thresholds used to automatically decide whether a compressed model variant is allowed, canaried, or blocked, including the limits for chat similarity drop, code pass rate change, retrieval embedding quality, and acceptable latency and cost changes?"
+    query = "In the draft spec about extending a routing policy engine for automated regional failover, what is the proposed priority order for evaluating different failure signals when deciding whether to shift traffic or fail over?"
+    query = "When is the 60 to 90 minute technical deep dive scheduled with the healthcare client about running model serving inside their own isolated network, and what is the time window in Pacific time?"
+
     start_time = time.perf_counter()
     answer = run_query(query)
     end_time = time.perf_counter()
 
     print(f'Time taken: {end_time - start_time:.2f} seconds')
 
-    print("\n=== Answer ===")
-    print(answer)
+    # print("\n=== Answer ===")
+    # print(answer)

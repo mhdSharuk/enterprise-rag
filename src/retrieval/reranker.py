@@ -14,17 +14,18 @@ MODEL_STORE = Path("model_store")
 RERANKER_PATH = MODEL_STORE / RERANKING_MODEL.replace("/", "_")
 
 class RerankResult:
-    def __init__(self, model_name: str, documents: list, scores: list):
+    def __init__(self, model_name: str, documents: list, scores: list, logits):
         self.model = model_name        
         self.data = sorted(
             [
                 {
                     "score"      : float(score), 
+                    "logit"      : float(logit),    
                     "id"         : docs["id"], 
                     "chunk_text" : docs["chunk_text"],
                     'doc_id'     : docs['doc_id']
                 }
-                for score, docs in zip(scores, documents)
+                for logit, score, docs in zip(logits, scores, documents)
                 if score >= RERANK_THRESHOLD
             ],
             key=lambda x: x["score"],
@@ -78,31 +79,44 @@ def load_local_reranker():
 
     return tokenizer, model
 
-
+from scipy.special import softmax
 def rerank_local(tokenizer, model, query: str, documents: list[dict], batch_size: int = 4) -> RerankResult:
     all_scores = []
     doc_texts = [doc["chunk_text"] for doc in documents]
+    doc_ids = [doc["id"] for doc in documents]
 
     for i in range(0, len(doc_texts), batch_size):
         batch_docs = doc_texts[i : i + batch_size]
-        
+        # batch_ids = doc_ids[i : i + batch_size]
+
         inputs = tokenizer(
             [query] * len(batch_docs),
             batch_docs,
             padding=True,
             truncation=True,
-            max_length=512,
+            # max_length=512,
             return_tensors="np" 
         )
 
         outputs = model(**inputs)
         
         logits = outputs.logits.flatten()
-        
-        probs = (1 / (1 + np.exp(-logits))).tolist()
-        all_scores.extend(probs)
 
-    return RerankResult(RERANKING_MODEL, documents, all_scores)
+        # probs = (1 / (1 + np.exp(-logits))).tolist()
+        all_scores.extend(logits)
+
+    # probs = (1 / (1 + np.exp(-np.array(all_scores)))).tolist()
+    probs = softmax(all_scores).tolist()
+
+    # for i in range(len(all_scores)):
+    #     print(f"Logit : {all_scores[i]}, Sigmoid Score: {probs[i]} => {documents[i]['id']}")
+
+    result = RerankResult(RERANKING_MODEL, documents, probs, all_scores)
+
+    for i in range(len(result.data)):
+        print(f"{result.data[i]['score']} ({result.data[i]['logit']}) => {result.data[i]['id']}")
+
+    return result
 
 
 def rerank_pinecone(pc: Pinecone, query: str, documents: list[dict], top_n: int = RERANK_TOP_N) -> RerankResult:
