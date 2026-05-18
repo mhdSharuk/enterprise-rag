@@ -1,41 +1,41 @@
 from src.utils.logger import logger
 from src.retrieval.embedder import get_dense_embedding
 from src.cache.cache_store import store_in_vectorstore
-from src.cache.semantic_match import check_semantic_match
-from src.cache.entity_validator import extract_entities, compare_entities, load_gliner_model
-
-from src.cache.config import CACHE_CONFIDENCE_THRESHOLD
+from src.cache.query_validator import compute_bm25_scores, compute_hybrid_score, check_semantic_match
+from src.cache.config import CACHE_FINAL_THRESHOLD
 
 
-def check_cache(query, index, 
-                embedding_tokenizer, embedding_model, 
-                threshold = CACHE_CONFIDENCE_THRESHOLD) -> tuple[bool, str | None]:
-    
-    semantic_result = check_semantic_match(index, query, embedding_tokenizer, 
-                                           embedding_model, threshold)
+def check_cache(query, index, query_embedding):
 
-    if semantic_result:
-        logger.info(f"Cache hit: semantic match (score: {semantic_result['score']:.3f})")
+    semantic_results = check_semantic_match(index, query, query_embedding)
 
-        gliner_model = load_gliner_model()
-        current_entities = extract_entities(query, gliner_model)
-        cached_entities = semantic_result["entities"]
+    if not semantic_results:
+        logger.info("Cache miss: no semantic matches above threshold")
+        return False, None
 
-        if compare_entities(current_entities, cached_entities):
-            logger.info("Entity validation passed")
-            return True, semantic_result["response"]
-        else:
-            logger.info("Entity validation failed")
+    cached_queries = [r["cached_query"] for r in semantic_results]
+    bm25_scores = compute_bm25_scores(query, cached_queries)
 
-    logger.info("Cache miss")
-    return False, None
+    best_final_score = 0.0
+    best_response = None
 
-def store_in_cache(index, query: str, response: str, embedding_tokenizer, embedding_model):
+    for i, result in enumerate(semantic_results):
+        semantic_score = result["score"]
+        bm25_score = bm25_scores[i]
+        final_score = compute_hybrid_score(semantic_score, bm25_score)
 
-    embedding = get_dense_embedding(embedding_tokenizer, embedding_model, query)
+        if final_score > best_final_score:
+            best_final_score = final_score
+            best_response = result["response"]
 
-    gliner_model = load_gliner_model()
-    entities = extract_entities(query, gliner_model)
+    if best_final_score >= CACHE_FINAL_THRESHOLD:
+        logger.info(f"Cache hit: hybrid match (score: {best_final_score:.3f})")
+        return True, best_response
+    else:
+        logger.info(f"Cache miss: hybrid score {best_final_score:.3f} below threshold")
+        return False, None
 
-    store_in_vectorstore(index, query, response, entities, embedding)
+def store_in_cache(index, query, response, query_dense_embedding, query_sparse_embedding=None):
+
+    store_in_vectorstore(index, query, response, query_dense_embedding)
     logger.info(f"Stored in cache: {query[:50]}...")

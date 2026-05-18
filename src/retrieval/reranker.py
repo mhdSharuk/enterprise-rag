@@ -36,7 +36,7 @@ class RerankResult:
 
 
 
-def load_reranker():
+def load_local_reranker():
     provider = get_onnx_provider()
 
     if RERANKER_PATH.exists():

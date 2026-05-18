@@ -1,3 +1,4 @@
+import hashlib
 from pinecone import Pinecone
 from src.cache.config import PINECONE_API_KEY, PINECONE_INDEX_NAME
 
@@ -14,19 +15,17 @@ def get_cache_index():
         print(error)
         return None, None
 
-def store_in_vectorstore(index, query: str, response: str, entities: list, embedding: list):
-    import hashlib
+def store_in_vectorstore(index, query, response, dense_embedding, sparse_embedding=None):
     query_hash = hashlib.sha256(query.encode()).hexdigest()
 
     try:
         index.upsert(
             vectors=[{
                 "id": query_hash,
-                "values": embedding,
+                "values": dense_embedding,
                 "metadata": {
                     "original_query": query,
                     "response": response,
-                    "entities": entities,
                     "is_cache": True
                 }
             }],
@@ -37,7 +36,7 @@ def store_in_vectorstore(index, query: str, response: str, entities: list, embed
     except Exception as e:
         print(f"Error storing in cache: {e}")
 
-def search_in_vectorstore(index, vector: list, top_k: int = 1) -> list[dict]:
+def search_in_vectorstore(index, vector: list, top_k: int = 5) -> list[dict]:
     try:
         response = index.query(
             vector=vector,

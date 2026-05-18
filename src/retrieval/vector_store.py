@@ -19,7 +19,9 @@ def get_pinecone_index():
         return None, None
 
 
-def query_all_sources(index, dense_vector: list, sparse_vector: dict | None = None, top_k: int = TOP_K_PER_SOURCE) -> list[dict]:
+def query_all_sources(index, dense_vector, 
+                      sparse_vector = None, 
+                      top_k = TOP_K_PER_SOURCE) -> list[dict]:
     futures = []
     for source in tqdm(SOURCES, desc="Querying sources"):
 

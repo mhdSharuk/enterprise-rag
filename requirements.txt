@@ -10,4 +10,4 @@ langfuse
 dotenv
 
 optimum[onnxruntime-gpu]
-gliner
+ramnk_bm25
