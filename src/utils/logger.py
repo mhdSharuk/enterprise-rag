@@ -3,10 +3,13 @@
 import os
 import sys
 import logging
+from pathlib import Path
 from dotenv import load_dotenv
-load_dotenv()
 
-LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO")
+env_path = Path(os.getcwd()) / ".env"
+load_dotenv(dotenv_path=env_path, override=True)
+
+LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 
 def get_logger(name: str = "enterpriserag") -> logging.Logger:
     logger = logging.getLogger(name)

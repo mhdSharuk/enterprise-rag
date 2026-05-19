@@ -1,5 +1,5 @@
 pinecone
-sentence-transformers[gpu]
+sentence-transformers
 transformers
 torch
 langchain-text-splitters

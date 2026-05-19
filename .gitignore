@@ -56,3 +56,7 @@ data/
 rag_venv/
 model_store/
 eval_set.json
+.env*
+.flaskenv*
+!.env.project
+!.env.vault

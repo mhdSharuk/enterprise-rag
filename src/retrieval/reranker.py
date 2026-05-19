@@ -105,16 +105,16 @@ def rerank_local(tokenizer, model, query: str, documents: list[dict], batch_size
         # probs = (1 / (1 + np.exp(-logits))).tolist()
         all_scores.extend(logits)
 
-    # probs = (1 / (1 + np.exp(-np.array(all_scores)))).tolist()
-    probs = softmax(all_scores).tolist()
+    probs = (1 / (1 + np.exp(-np.array(all_scores)))).tolist()
+    # probs = softmax(all_scores).tolist()
 
     # for i in range(len(all_scores)):
     #     print(f"Logit : {all_scores[i]}, Sigmoid Score: {probs[i]} => {documents[i]['id']}")
 
     result = RerankResult(RERANKING_MODEL, documents, probs, all_scores)
 
-    for i in range(len(result.data)):
-        print(f"{result.data[i]['score']} ({result.data[i]['logit']}) => {result.data[i]['id']}")
+    # for i in range(len(result.data)):
+    #     print(f"{result.data[i]['score']} ({result.data[i]['logit']}) => {result.data[i]['id']}")
 
     return result
 
