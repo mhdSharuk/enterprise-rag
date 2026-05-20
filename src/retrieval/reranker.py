@@ -26,11 +26,13 @@ class RerankResult:
                     'doc_id'     : docs['doc_id']
                 }
                 for logit, score, docs in zip(logits, scores, documents)
-                if score >= RERANK_THRESHOLD
+                # if score >= RERANK_THRESHOLD
             ],
             key=lambda x: x["score"],
             reverse=True
         )
+
+        self.data = self.data[:RERANK_TOP_N]
 
     def __repr__(self):
         return f"RerankResult(model='{self.model}', data={self.data})"
