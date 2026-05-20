@@ -10,17 +10,23 @@ from src.generation.model_loader import load_model
 from src.generation.generator import generate
 from src.cache.main import check_cache, store_in_cache
 
-
-def run_query(query) -> str:
-    pc, index = get_pinecone_index()
-    dense_embedding_tokenizer, dense_embedding_model = load_embedding_model()
+def initialize_search_pipeline():
+    pc, pc_index = get_pinecone_index()
+    dense_tokenizer, dense_model = load_embedding_model()
     reranker = load_local_reranker() if LOCAL_RERANK else None
+    
+    return pc, pc_index, dense_tokenizer, dense_model, reranker
+
+
+
+def run_query(query, pc, pc_index, 
+            dense_tokenizer, dense_model, reranker_model) -> str:
 
     # tokenizer, model = load_model()
 
     query_dense_embedding, query_sparse_embedding = get_embeddings(
-        dense_embedding_tokenizer, 
-        dense_embedding_model, 
+        dense_tokenizer, 
+        dense_model, 
         pc, query
     )
 
@@ -38,8 +44,8 @@ def run_query(query) -> str:
         query_dense_embedding=query_dense_embedding,
         query_sparse_embedding=query_sparse_embedding,
         pc=pc,
-        index=index,
-        reranker=reranker
+        index=pc_index,
+        reranker=reranker_model
     )
 
     answer = f'Answer generated for query : {query}'#generate(query, merged_docs, tokenizer, model)
@@ -53,13 +59,15 @@ def run_query(query) -> str:
 
 
 if __name__ == "__main__":
+    pc, pc_index, dense_tokenizer, dense_model, reranker = initialize_search_pipeline()
+
     # query = "What are the specific gate thresholds used to automatically decide whether a compressed model variant is allowed, canaried, or blocked, including the limits for chat similarity drop, code pass rate change, retrieval embedding quality, and acceptable latency and cost changes?"
     query = "In the draft spec about extending a routing policy engine for automated regional failover, what is the proposed priority order for evaluating different failure signals when deciding whether to shift traffic or fail over?"
     # query = "When is the 60 to 90 minute technical deep dive scheduled with the healthcare client about running model serving inside their own isolated network, and what is the time window in Pacific time?"
     # query = "In the notes about keeping long, stop-and-go chat sessions cheap without replaying the whole history, what storage setup and time-to-live were proposed for keeping the compact per-session state for recent sessions versus longer retention?"
 
     start_time = time.perf_counter()
-    answer = run_query(query)
+    answer = run_query(query, pc, pc_index, dense_tokenizer, dense_model, reranker)
     end_time = time.perf_counter()
 
     print(f'Time taken: {end_time - start_time:.2f} seconds')
