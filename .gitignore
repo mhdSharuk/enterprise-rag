@@ -60,3 +60,5 @@ eval_set.json
 .flaskenv*
 !.env.project
 !.env.vault
+todo.md
+interview_questions.md

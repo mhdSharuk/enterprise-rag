@@ -5,6 +5,7 @@ def merge_ranked_chunks(result) -> list[dict]:
     docs = [
         {
             "id": d["id"],
+            "doc_id": d["doc_id"],
             "score": d["score"],
             "text": d.get("chunk_text", ""),
             "base_id": d["id"].rsplit("_chunk", 1)[0],
@@ -35,7 +36,7 @@ def merge_ranked_chunks(result) -> list[dict]:
     for group in merged_groups:
         merged.append({
             "id": group[0]["base_id"],
-            "doc_id": group[0]["base_id"],
+            "doc_id": group[0]["doc_id"],
             "chunk_range": (group[0]["chunk_num"], group[-1]["chunk_num"]),
             "score": max(c["score"] for c in group),
             "text": " ".join(c["text"] for c in group)

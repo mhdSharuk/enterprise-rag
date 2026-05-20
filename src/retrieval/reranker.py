@@ -79,7 +79,6 @@ def load_local_reranker():
 
     return tokenizer, model
 
-from scipy.special import softmax
 def rerank_local(tokenizer, model, query: str, documents: list[dict], batch_size: int = 4) -> RerankResult:
     all_scores = []
     doc_texts = [doc["chunk_text"] for doc in documents]
@@ -87,7 +86,6 @@ def rerank_local(tokenizer, model, query: str, documents: list[dict], batch_size
 
     for i in range(0, len(doc_texts), batch_size):
         batch_docs = doc_texts[i : i + batch_size]
-        # batch_ids = doc_ids[i : i + batch_size]
 
         inputs = tokenizer(
             [query] * len(batch_docs),
@@ -102,19 +100,11 @@ def rerank_local(tokenizer, model, query: str, documents: list[dict], batch_size
         
         logits = outputs.logits.flatten()
 
-        # probs = (1 / (1 + np.exp(-logits))).tolist()
         all_scores.extend(logits)
 
     probs = (1 / (1 + np.exp(-np.array(all_scores)))).tolist()
-    # probs = softmax(all_scores).tolist()
-
-    # for i in range(len(all_scores)):
-    #     print(f"Logit : {all_scores[i]}, Sigmoid Score: {probs[i]} => {documents[i]['id']}")
 
     result = RerankResult(RERANKING_MODEL, documents, probs, all_scores)
-
-    # for i in range(len(result.data)):
-    #     print(f"{result.data[i]['score']} ({result.data[i]['logit']}) => {result.data[i]['id']}")
 
     return result
 
