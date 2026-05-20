@@ -88,7 +88,7 @@ def get_dense_embedding(tokenizer, model, text) -> list[float]:
     norm = np.linalg.norm(embeddings, axis=1, keepdims=True)
     embeddings = embeddings / norm
 
-    return embeddings[0].tolist()
+    return embeddings#[0].tolist()
 
 def get_sparse_embedding(pc: Pinecone, text: str):
     # logger.info(f'Creating sparse embedding for text : {text[:30]}...')
