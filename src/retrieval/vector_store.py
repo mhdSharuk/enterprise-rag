@@ -23,7 +23,7 @@ def query_all_sources(index, dense_vector,
                       sparse_vector = None, 
                       top_k = TOP_K_PER_SOURCE) -> list[dict]:
     futures = []
-    for source in tqdm(SOURCES, desc="Querying sources"):        
+    for source in SOURCES:        
         future = index.query(
             top_k=top_k,
             vector=dense_vector,

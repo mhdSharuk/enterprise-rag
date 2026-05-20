@@ -1,5 +1,4 @@
 import time
-from src.retrieval.chunk_utils import merge_ranked_chunks
 from src.retrieval.vector_store import query_all_sources, get_pinecone_index
 from src.retrieval.reranker import rerank_pinecone, rerank_local, load_local_reranker
 from src.retrieval.embedder import get_dense_embedding, hybrid_score_norm, load_embedding_model, get_sparse_embedding
@@ -23,9 +22,9 @@ def retrieve(query,
     else:
         reranked = rerank_pinecone(pc, query, documents, top_n=rerank_top_n)
 
-    merged = merge_ranked_chunks(reranked.data)
+    # merged = merge_ranked_chunks(reranked.data)
 
-    return merged, query_dense_embedding, query_sparse_embedding
+    return reranked
 
 
 # if __name__ == "__main__":

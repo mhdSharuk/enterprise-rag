@@ -6,6 +6,7 @@ from src.retrieval.reranker import load_local_reranker
 from src.retrieval.embedder import load_embedding_model, get_embeddings
 from src.retrieval.vector_store import get_pinecone_index
 from src.retrieval.query import retrieve
+from src.retrieval.chunk_utils import merge_ranked_chunks
 from src.generation.model_loader import load_model
 from src.generation.generator import generate
 from src.cache.main import check_cache, store_in_cache
@@ -39,7 +40,7 @@ def run_query(query, pc, pc_index,
     # if hit:
     #     return cached_response
 
-    merged_docs, dense_embedding, sparse_embedding = retrieve(
+    retrieved_docs = retrieve(
         query=query,
         query_dense_embedding=query_dense_embedding,
         query_sparse_embedding=query_sparse_embedding,
@@ -48,14 +49,13 @@ def run_query(query, pc, pc_index,
         reranker=reranker_model
     )
 
+    # merged = merge_ranked_chunks(retrieved_docs.data)
+
     answer = f'Answer generated for query : {query}'#generate(query, merged_docs, tokenizer, model)
 
-    # print(merged_docs[0])
-    # print(merged_docs[0]['text'])
+    # store_in_cache(index, query, answer, query_dense_embedding, query_sparse_embedding)
 
-    # store_in_cache(index, query, answer, dense_embedding, sparse_embedding)
-
-    # return answer
+    # return retrieved_docs, answer
 
 
 if __name__ == "__main__":
@@ -67,7 +67,7 @@ if __name__ == "__main__":
     # query = "In the notes about keeping long, stop-and-go chat sessions cheap without replaying the whole history, what storage setup and time-to-live were proposed for keeping the compact per-session state for recent sessions versus longer retention?"
 
     start_time = time.perf_counter()
-    answer = run_query(query, pc, pc_index, dense_tokenizer, dense_model, reranker)
+    retrieved_docs, answer = run_query(query, pc, pc_index, dense_tokenizer, dense_model, reranker)
     end_time = time.perf_counter()
 
     print(f'Time taken: {end_time - start_time:.2f} seconds')
