@@ -91,7 +91,7 @@ def get_dense_embedding(tokenizer, model, text) -> list[float]:
     return embeddings[0].tolist()
 
 def get_sparse_embedding(pc: Pinecone, text: str):
-    logger.info(f'Creating sparse embedding for text : {text[:30]}...')
+    # logger.info(f'Creating sparse embedding for text : {text[:30]}...')
 
     result = pc.inference.embed(
         model="pinecone-sparse-english-v0",

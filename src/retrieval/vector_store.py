@@ -37,7 +37,7 @@ def query_all_sources(index, dense_vector,
         futures.append(future)
 
     documents = []
-    for future in tqdm(futures, desc="Collecting results"):
+    for future in futures:
         response = future.get()
         matches = response.to_dict()["matches"]
         docs = [
