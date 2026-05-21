@@ -1,15 +1,14 @@
-import sys
 import time
 
-from src.retrieval.config import LOCAL_RERANK, HYBRID_ALPHA
-from src.retrieval.reranker import load_local_reranker
-from src.retrieval.embedder import load_embedding_model, get_embeddings
-from src.retrieval.vector_store import get_pinecone_index
 from src.retrieval.query import retrieve
-from src.retrieval.chunk_utils import merge_ranked_chunks
-from src.generation.model_loader import load_model
-from src.generation.generator import generate
+from src.retrieval.config import LOCAL_RERANK
 from src.cache.main import check_cache, store_in_cache
+from src.generation.generator import generate_response
+from src.retrieval.reranker import load_local_reranker
+from src.retrieval.chunk_utils import merge_ranked_chunks
+from src.retrieval.vector_store import get_pinecone_index
+from src.retrieval.embedder import get_embeddings, load_embedding_model
+
 
 def initialize_search_pipeline():
     pc, pc_index = get_pinecone_index()
@@ -23,8 +22,6 @@ def initialize_search_pipeline():
 def run_query(query, pc, pc_index, 
             dense_tokenizer, dense_model, reranker_model) -> str:
 
-    # tokenizer, model = load_model()
-
     query_dense_embedding, query_sparse_embedding = get_embeddings(
         dense_tokenizer, 
         dense_model, 
@@ -33,7 +30,7 @@ def run_query(query, pc, pc_index,
 
     # hit, cached_response = check_cache(
     #     query = query,
-    #     index = index,
+    #     index = pc_index,
     #     query_embedding = query_dense_embedding
     # )
 
@@ -49,13 +46,14 @@ def run_query(query, pc, pc_index,
         reranker=reranker_model
     )
 
-    # merged = merge_ranked_chunks(retrieved_docs.data)
+    merged_docs = merge_ranked_chunks(retrieved_docs.data)
 
-    answer = f'Answer generated for query : {query}'#generate(query, merged_docs, tokenizer, model)
+    # answer = f'Answer generated for query : {query}'
+    answer = generate_response(query, merged_docs)
 
-    # store_in_cache(index, query, answer, query_dense_embedding, query_sparse_embedding)
+    store_in_cache(pc_index, query, answer, query_dense_embedding, query_sparse_embedding)
 
-    # return retrieved_docs, answer
+    return retrieved_docs, answer
 
 
 if __name__ == "__main__":
@@ -63,8 +61,8 @@ if __name__ == "__main__":
 
     # query = "What are the specific gate thresholds used to automatically decide whether a compressed model variant is allowed, canaried, or blocked, including the limits for chat similarity drop, code pass rate change, retrieval embedding quality, and acceptable latency and cost changes?"
     # query = "In the draft spec about extending a routing policy engine for automated regional failover, what is the proposed priority order for evaluating different failure signals when deciding whether to shift traffic or fail over?"
-    query = "When is the 60 to 90 minute technical deep dive scheduled with the healthcare client about running model serving inside their own isolated network, and what is the time window in Pacific time?"
-    # query = "In the notes about keeping long, stop-and-go chat sessions cheap without replaying the whole history, what storage setup and time-to-live were proposed for keeping the compact per-session state for recent sessions versus longer retention?"
+    # query = "When is the 60 to 90 minute technical deep dive scheduled with the healthcare client about running model serving inside their own isolated network, and what is the time window in Pacific time?"
+    query = "In the notes about keeping long, stop-and-go chat sessions cheap without replaying the whole history, what storage setup and time-to-live were proposed for keeping the compact per-session state for recent sessions versus longer retention?"
 
     start_time = time.perf_counter()
     retrieved_docs, answer = run_query(query, pc, pc_index, dense_tokenizer, dense_model, reranker)

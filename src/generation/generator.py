@@ -1,40 +1,40 @@
-from threading import Thread
-from transformers import TextIteratorStreamer
-from src.generation.prompt_templates import SYSTEM_PROMPT, build_context_block
-from src.generation.config import MAX_NEW_TOKENS
+import os
+from src.generation.config import langfuse_client, groq_client, GROQ_GENERATION_MODEL
 
-def generate(query: str, merged_docs: list[dict], tokenizer, model, max_new_tokens: int = MAX_NEW_TOKENS) -> str:
+GENERATION_SYSTEM_PROMPT = langfuse_client.get_prompt("generation_system_prompt", label="production").prompt
+
+def build_context_block(query: str, merged_docs: list[dict]) -> str:
+    context = f"Context:"
+    for doc in merged_docs:
+        source = doc.get("id", "")
+        text = doc.get("text", "")
+        chunk_range = doc.get("chunk_range")
+        label = f"Document: {source} (chunk {chunk_range})" if chunk_range else f"Document: {source}"
+        context += f"\n{label}\n{text}\n{'=' * 20}\n"
+
+    context += f"Query : {query}"
+    return context
+
+def generate_response(query: str, merged_docs: list[dict]) -> str:
     context = build_context_block(query, merged_docs)
 
-    messages = [
-        {"role": "system", "content": SYSTEM_PROMPT},
+    response = groq_client.chat.completions.create(
+      model=GROQ_GENERATION_MODEL,
+      messages=[
+        {"role": "system", "content": GENERATION_SYSTEM_PROMPT},
         {"role": "user", "content": context}
-    ]
+      ],
 
-    text = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
-    inputs = tokenizer(text, return_tensors="pt")
+      temperature=0,
+      max_completion_tokens=8192,
+      reasoning_effort="medium",
+      stream=False,
+      stop=None
 
-    streamer = TextIteratorStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True)
-
-    generation_kwargs = dict(
-        input_ids=inputs["input_ids"],
-        attention_mask=inputs["attention_mask"],
-        max_new_tokens=max_new_tokens,
-        do_sample=False,
-        repetition_penalty=1.1,
-        eos_token_id=tokenizer.eos_token_id,
-        streamer=streamer,
     )
 
-    thread = Thread(target=model.generate, kwargs=generation_kwargs)
-    thread.start()
+    generated_text = response.choices[0].message.content
+    total_tokens = response.usage.total_tokens
+    finish_reason = response.choices[0].finish_reason
 
-    generated = ""
-    for token in streamer:
-        print(token, end="", flush=True)
-        generated += token
-
-    thread.join()
-    print()
-
-    return generated
+    return generated_text, total_tokens, finish_reason
