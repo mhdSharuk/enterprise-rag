@@ -11,3 +11,7 @@ dotenv
 
 optimum[onnxruntime-gpu]
 rank_bm25
+
+groq
+deepeval
+openai
