@@ -11,10 +11,12 @@ PINECONE_NAMESPACE = os.getenv("PINECONE_NAMESPACE")
 
 HF_TOKEN = os.getenv("HF_TOKEN")
 
-EMBEDDING_MODEL     = os.getenv("EMBEDDING_MODEL")
-EMBEDDING_ONNX_FILE = os.getenv('EMBEDDING_ONNX_FILE')
-RERANKING_MODEL     = os.getenv("RERANKING_MODEL")
-RERANKING_ONNX_FILE = os.getenv('RERANKING_ONNX_FILE')
+DENSE_EMBEDDING_MODEL      = os.getenv("DENSE_EMBEDDING_MODEL")
+DENSE_EMBEDDING_ONNX_FILE  = os.getenv('DENSE_EMBEDDING_ONNX_FILE')
+SPARSE_EMBEDDING_MODEL     = os.getenv("SPARSE_EMBEDDING_MODEL")
+SPARSE_EMBEDDING_ONNX_FILE = os.getenv('SPARSE_EMBEDDING_ONNX_FILE')
+RERANKING_MODEL            = os.getenv("RERANKING_MODEL")
+RERANKING_ONNX_FILE        = os.getenv('RERANKING_ONNX_FILE')
 
 SOURCES = ["confluence", "fireflies", "github", "gmail", "google_drive", "hubspot", "jira", "linear", "slack"]
 

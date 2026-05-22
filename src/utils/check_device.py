@@ -15,6 +15,3 @@ def get_onnx_provider() -> str:
     
     logger.warning("GPU not detected or onnxruntime-gpu mismatch. Falling back to CPUExecutionProvider.")
     return "CPUExecutionProvider"
-
-
-get_onnx_provider()

@@ -1,5 +1,5 @@
 import os
-from src.generation.config import langfuse_client, groq_client, GROQ_GENERATION_MODEL
+from src.generation.config import openai_client, langfuse_client, GROQ_GENERATION_MODEL
 
 GENERATION_SYSTEM_PROMPT = langfuse_client.get_prompt("generation_system_prompt", label="production").prompt
 
@@ -18,7 +18,7 @@ def build_context_block(query: str, merged_docs: list[dict]) -> str:
 def generate_response(query: str, merged_docs: list[dict]) -> str:
     context = build_context_block(query, merged_docs)
 
-    response = groq_client.chat.completions.create(
+    response = openai_client.chat.completions.create(
       model=GROQ_GENERATION_MODEL,
       messages=[
         {"role": "system", "content": GENERATION_SYSTEM_PROMPT},
@@ -26,15 +26,23 @@ def generate_response(query: str, merged_docs: list[dict]) -> str:
       ],
 
       temperature=0,
-      max_completion_tokens=8192,
-      reasoning_effort="medium",
+      max_completion_tokens=2048,
       stream=False,
-      stop=None
-
+      stop=None,
+      extra_body={
+          "reasoning_effort": "medium"
+      }
     )
 
     generated_text = response.choices[0].message.content
     total_tokens = response.usage.total_tokens
     finish_reason = response.choices[0].finish_reason
 
+    # print("Generated Response:", generated_text)
+    # print("Total Tokens Used:", total_tokens)
+    # print("Finish Reason:", finish_reason)
+
     return generated_text, total_tokens, finish_reason
+
+
+# _, _, _ = generate_response()

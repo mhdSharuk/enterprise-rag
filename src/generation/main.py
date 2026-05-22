@@ -7,24 +7,33 @@ from src.generation.generator import generate_response
 from src.retrieval.reranker import load_local_reranker
 from src.retrieval.chunk_utils import merge_ranked_chunks
 from src.retrieval.vector_store import get_pinecone_index
-from src.retrieval.embedder import get_embeddings, load_embedding_model
+from src.retrieval.embedder import (get_embeddings, load_dense_embedding_model,
+                                    load_sparse_embedding_model)
 
 
 def initialize_search_pipeline():
     pc, pc_index = get_pinecone_index()
-    dense_tokenizer, dense_model = load_embedding_model()
+    dense_tokenizer, dense_model = load_dense_embedding_model()
+    sparse_tokenizer, sparse_model, sparse_input_names = load_sparse_embedding_model()
     reranker = load_local_reranker() if LOCAL_RERANK else None
     
-    return pc, pc_index, dense_tokenizer, dense_model, reranker
+    return (pc, pc_index, dense_tokenizer, dense_model, 
+            sparse_tokenizer, sparse_model, 
+            sparse_input_names, reranker)
 
 
 
 def run_query(query, pc, pc_index, 
-            dense_tokenizer, dense_model, reranker_model) -> str:
+            dense_tokenizer, dense_model, 
+            sparse_tokenizer, sparse_model,
+            sparse_input_names, reranker_model) -> tuple:
 
     query_dense_embedding, query_sparse_embedding = get_embeddings(
         dense_tokenizer, 
         dense_model, 
+        sparse_tokenizer,
+        sparse_model,
+        sparse_input_names,
         pc, query
     )
 
@@ -49,15 +58,17 @@ def run_query(query, pc, pc_index,
     merged_docs = merge_ranked_chunks(retrieved_docs.data)
 
     # answer = f'Answer generated for query : {query}'
-    answer = generate_response(query, merged_docs)
+    answer, total_tokens, finish_reason = generate_response(query, merged_docs)
 
-    store_in_cache(pc_index, query, answer, query_dense_embedding, query_sparse_embedding)
+    # store_in_cache(pc_index, query, answer, query_dense_embedding, query_sparse_embedding)
 
-    return retrieved_docs, answer
+    return retrieved_docs, answer, total_tokens, finish_reason
 
 
 if __name__ == "__main__":
-    pc, pc_index, dense_tokenizer, dense_model, reranker = initialize_search_pipeline()
+    (pc, pc_index, dense_tokenizer, dense_model, 
+     sparse_tokenizer, sparse_model, sparse_input_names, 
+     reranker) = initialize_search_pipeline()
 
     # query = "What are the specific gate thresholds used to automatically decide whether a compressed model variant is allowed, canaried, or blocked, including the limits for chat similarity drop, code pass rate change, retrieval embedding quality, and acceptable latency and cost changes?"
     # query = "In the draft spec about extending a routing policy engine for automated regional failover, what is the proposed priority order for evaluating different failure signals when deciding whether to shift traffic or fail over?"
@@ -65,10 +76,15 @@ if __name__ == "__main__":
     query = "In the notes about keeping long, stop-and-go chat sessions cheap without replaying the whole history, what storage setup and time-to-live were proposed for keeping the compact per-session state for recent sessions versus longer retention?"
 
     start_time = time.perf_counter()
-    retrieved_docs, answer = run_query(query, pc, pc_index, dense_tokenizer, dense_model, reranker)
+    retrieved_docs, answer, total_tokens, finish_reason = run_query(query, pc, pc_index, 
+                                                                    dense_tokenizer, dense_model, 
+                                                                    sparse_tokenizer, sparse_model, 
+                                                                    sparse_input_names, reranker)
     end_time = time.perf_counter()
 
     print(f'Time taken: {end_time - start_time:.2f} seconds')
+    print('Total tokens used:', total_tokens)
+    print('Finish reason:', finish_reason)
 
-    # print("\n=== Answer ===")
-    # print(answer)
+    print("\n=== Answer ===")
+    print(answer)
