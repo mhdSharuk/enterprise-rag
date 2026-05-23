@@ -34,7 +34,7 @@ def run_query(query, pc, pc_index,
         sparse_tokenizer,
         sparse_model,
         sparse_input_names,
-        pc, query
+        query
     )
 
     # hit, cached_response = check_cache(
@@ -50,8 +50,7 @@ def run_query(query, pc, pc_index,
         query=query,
         query_dense_embedding=query_dense_embedding,
         query_sparse_embedding=query_sparse_embedding,
-        pc=pc,
-        index=pc_index,
+        pc_index=pc_index,
         reranker=reranker_model
     )
 
@@ -73,7 +72,8 @@ if __name__ == "__main__":
     # query = "What are the specific gate thresholds used to automatically decide whether a compressed model variant is allowed, canaried, or blocked, including the limits for chat similarity drop, code pass rate change, retrieval embedding quality, and acceptable latency and cost changes?"
     # query = "In the draft spec about extending a routing policy engine for automated regional failover, what is the proposed priority order for evaluating different failure signals when deciding whether to shift traffic or fail over?"
     # query = "When is the 60 to 90 minute technical deep dive scheduled with the healthcare client about running model serving inside their own isolated network, and what is the time window in Pacific time?"
-    query = "In the notes about keeping long, stop-and-go chat sessions cheap without replaying the whole history, what storage setup and time-to-live were proposed for keeping the compact per-session state for recent sessions versus longer retention?"
+    query = "How much duration did it take to finish the meeting on the healthcare client ?"
+    # query = "In the notes about keeping long, stop-and-go chat sessions cheap without replaying the whole history, what storage setup and time-to-live were proposed for keeping the compact per-session state for recent sessions versus longer retention?"
 
     start_time = time.perf_counter()
     retrieved_docs, answer, total_tokens, finish_reason = run_query(query, pc, pc_index, 

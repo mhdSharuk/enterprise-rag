@@ -1,6 +1,7 @@
 import os
-from langfuse import Langfuse
 from pathlib import Path
+from openai import OpenAI
+from langfuse import Langfuse
 from dotenv import load_dotenv
 from deepeval.models import DeepEvalBaseLLM
 

@@ -1,4 +1,5 @@
 from tqdm import tqdm
+import numpy as np
 from src.retrieval.config import (PINECONE_API_KEY, PINECONE_INDEX_NAME, 
                                   SOURCES, TOP_K_PER_SOURCE, PINECONE_NAMESPACE)
 from src.retrieval.reranker import RerankResult
