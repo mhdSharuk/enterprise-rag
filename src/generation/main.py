@@ -68,10 +68,10 @@ def run_query(query, pc, pc_index,
 
       answer, total_tokens, finish_reason = generate_response(query, merged_docs)
 
-      store_in_cache(pc_index, query, answer, 
-            query_dense_embedding, 
-            query_sparse_embedding,
-            sources)
+    #   store_in_cache(pc_index, query, answer, 
+    #         query_dense_embedding, 
+    #         query_sparse_embedding,
+    #         sources)
 
       return False, merged_docs, answer, total_tokens, finish_reason
 

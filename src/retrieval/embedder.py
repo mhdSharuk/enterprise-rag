@@ -20,7 +20,6 @@ embedding_model = None
 plade_tokenizer = None
 splade_session = None
 splade_input_names = None
-splade_output_names = None
 
 def load_dense_embedding_model():
     global embedding_tokenizer, embedding_model
@@ -75,7 +74,7 @@ def load_sparse_embedding_model():
     global splade_tokenizer, splade_session, splade_input_names, splade_output_names
 
     if splade_session is not None:
-        return splade_tokenizer, splade_session, splade_input_names, splade_output_names
+        return splade_tokenizer, splade_session, splade_input_names
 
     provider = get_onnx_provider()
     

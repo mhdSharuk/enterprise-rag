@@ -10,9 +10,7 @@ langfuse
 dotenv
 
 optimum[onnxruntime-gpu]
-rank_bm25
 huggingface_hub[hf_xet]
-groq
 deepeval
 openai
 
@@ -22,5 +20,5 @@ fastapi
 uvicorn[standard]
 streamlit
 httpx
-
+asyncio
 # pip install llama-cpp-python --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu --no-cache-dir --force-reinstall 
