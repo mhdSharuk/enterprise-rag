@@ -85,7 +85,8 @@ if __name__ == "__main__":
     # query = "When is the 60 to 90 minute technical deep dive scheduled with the healthcare client about running model serving inside their own isolated network, and what is the time window in Pacific time?"
     # query = "In the notes about keeping long, stop-and-go chat sessions cheap without replaying the whole history, what storage setup and time-to-live were proposed for keeping the compact per-session state for recent sessions versus longer retention?"
 
-    query = "What are the default size limits for file uploads and total request size for the new multipart upload support on the OpenAI-compatible API endpoints?"
+    # query = "What are the default size limits for file uploads and total request size for the new multipart upload support on the OpenAI-compatible API endpoints?"
+    query = "What is the name of the new metric added so SRE can track when server-side streaming sessions get finalized due to hitting the time limit?"
 
     start_time = time.perf_counter()
     (is_cache_hit, retrieved_docs, 
@@ -107,5 +108,5 @@ if __name__ == "__main__":
     print('Total tokens used:', total_tokens)
     print('Finish reason:', finish_reason)
 
-    # print("\n=== Answer ===")
-    # pprint(retrieved_docs)
+    print("\n=== Answer ===")
+    print(answer)
