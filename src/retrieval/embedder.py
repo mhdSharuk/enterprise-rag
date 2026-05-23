@@ -1,12 +1,9 @@
-import os
 import numpy as np
 import onnxruntime as ort
-from pathlib import Path
-from pinecone import Pinecone
-from optimum.onnxruntime import ORTModelForFeatureExtraction, ORTModelForMaskedLM
-from transformers import AutoTokenizer
 
-# from sentence_transformers import SentenceTransformer
+from pathlib import Path
+from transformers import AutoTokenizer
+from optimum.onnxruntime import ORTModelForFeatureExtraction, ORTModelForMaskedLM
 
 from src.utils.logger import logger
 from src.utils.check_device import get_onnx_provider
@@ -73,7 +70,6 @@ def load_dense_embedding_model():
     logger.info(f"Saved ONNX embedding model to {DENSE_EMBEDDER_PATH}")
     return embedding_tokenizer, embedding_model
 
-
 def load_sparse_embedding_model():
     """Load SPLADE tokenizer + raw ONNX session"""
     global splade_tokenizer, splade_session, splade_input_names, splade_output_names
@@ -110,11 +106,12 @@ def load_sparse_embedding_model():
 
     
     splade_tokenizer = AutoTokenizer.from_pretrained(SPARSE_EMBEDDING_MODEL, token=HF_TOKEN)
-    
+
     splade_model = ORTModelForMaskedLM.from_pretrained(
         SPARSE_EMBEDDING_MODEL,
         subfolder="onnx",
         file_name = SPARSE_EMBEDDING_ONNX_FILE,
+        # export=True,
         token=HF_TOKEN,
         provider=provider,
     )
@@ -134,9 +131,7 @@ def load_sparse_embedding_model():
     logger.info(f"Saved and loaded SPLADE ONNX model")
     return splade_tokenizer, splade_session, splade_input_names
 
-
-
-def get_dense_embedding(tokenizer, model, text) -> list[float]:
+def get_dense_embedding(tokenizer, model, text):
 
     def mean_pooling(model_output, attention_mask):
         token_embeddings = model_output[0]
@@ -196,7 +191,7 @@ def get_sparse_embedding(tokenizer, session, input_names, text):
 
     return sparse_indices, sparse_values
 
-def hybrid_score_norm(dense: list, sparse_indices, sparse_values, alpha: float):
+def hybrid_score_norm(dense, sparse_indices, sparse_values, alpha):
     if not (0 <= alpha <= 1):
         raise ValueError("Alpha must be between 0 and 1")
 
@@ -229,7 +224,3 @@ def get_embeddings(dense_embedding_tokenizer,
     hdense, hsparse = hybrid_score_norm(dense_embedding, sparse_indices, sparse_values, alpha=HYBRID_ALPHA)
 
     return hdense, hsparse
-
-
-if __name__ == "__main__":
-    sparse_tokenizer, sparse_session, sparse_input_names = load_sparse_embedding_model()
