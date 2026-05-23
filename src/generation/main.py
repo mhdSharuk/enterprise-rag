@@ -37,14 +37,14 @@ def run_query(query, pc, pc_index,
         query
     )
 
-    # hit, cached_response = check_cache(
-    #     query = query,
-    #     index = pc_index,
-    #     query_embedding = query_dense_embedding
-    # )
+    hit, cached_response = check_cache(
+        pc_index = pc_index,
+        query_dense_embedding = query_dense_embedding,
+        query_sparse_embedding = query_sparse_embedding
+    )
 
-    # if hit:
-    #     return cached_response
+    if hit:
+        return cached_response
 
     retrieved_docs = retrieve(
         query=query,
@@ -55,11 +55,14 @@ def run_query(query, pc, pc_index,
     )
 
     merged_docs = merge_ranked_chunks(retrieved_docs.data)
+    sources = [doc['id'] for doc in merged_docs]
 
-    # answer = f'Answer generated for query : {query}'
     answer, total_tokens, finish_reason = generate_response(query, merged_docs)
 
-    # store_in_cache(pc_index, query, answer, query_dense_embedding, query_sparse_embedding)
+    store_in_cache(pc_index, query, answer, 
+                   query_dense_embedding, 
+                   query_sparse_embedding,
+                   sources)
 
     return retrieved_docs, answer, total_tokens, finish_reason
 

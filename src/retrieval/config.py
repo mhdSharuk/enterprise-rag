@@ -22,6 +22,6 @@ SOURCES = ["confluence", "fireflies", "github", "gmail", "google_drive", "hubspo
 
 TOP_K_PER_SOURCE = 5
 RERANK_TOP_N     = 10
-HYBRID_ALPHA     = 0.75
+HYBRID_ALPHA     = 0.5
 LOCAL_RERANK     = True
 RERANK_THRESHOLD = 0.5

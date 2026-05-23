@@ -1,41 +1,72 @@
+import hashlib
 from src.utils.logger import logger
-from src.retrieval.embedder import get_dense_embedding
-from src.cache.cache_store import store_in_vectorstore
-from src.cache.query_validator import compute_bm25_scores, compute_hybrid_score, check_semantic_match
-from src.cache.config import CACHE_FINAL_THRESHOLD
+from src.cache.config import (
+    CACHE_SCORE_THRESHOLD,
+    CACHE_SEMANTIC_TOP_K,
+    PINECONE_CACHE_NAMESPACE
+)
 
 
-def check_cache(query, index, query_embedding):
+def check_cache(pc_index, query_dense_embedding, query_sparse_embedding):
 
-    semantic_results = check_semantic_match(index, query, query_embedding)
+    try:
+        response = pc_index.query(
+            vector=query_dense_embedding,
+            sparse_vector=query_sparse_embedding,
+            top_k=CACHE_SEMANTIC_TOP_K,
+            include_values=False,
+            include_metadata=True,
+            namespace=PINECONE_CACHE_NAMESPACE,
+            async_req=False
+        )
 
-    if not semantic_results:
-        logger.info("Cache miss: no semantic matches above threshold")
+        matches = response.to_dict()["matches"]
+
+        cache_results = []
+        for m in matches:
+            cache_results.append({
+                "id": m["id"],
+                "score": m["score"],
+                "cached_query": m["metadata"]["query"],
+                "response": m["metadata"]["answer"],
+            })
+    
+        filtered_results = [
+            result for result in cache_results if result["score"] >= CACHE_SCORE_THRESHOLD
+        ]
+
+        if not filtered_results:
+            logger.info("Cache miss: no semantic matches above threshold")
+            return False, None
+
+        return True, filtered_results[0]["response"]
+
+    except Exception as err:
+        print(f"Error in check_cache : {err}")
         return False, None
 
-    cached_queries = [r["cached_query"] for r in semantic_results]
-    bm25_scores = compute_bm25_scores(query, cached_queries)
+def store_in_cache(pc_index, query, response, 
+                   query_dense_embedding, 
+                   query_sparse_embedding,
+                   sources):
 
-    best_final_score = 0.0
-    best_response = None
+    query_hash = hashlib.sha256(query.encode()).hexdigest()
 
-    for i, result in enumerate(semantic_results):
-        semantic_score = result["score"]
-        bm25_score = bm25_scores[i]
-        final_score = compute_hybrid_score(semantic_score, bm25_score)
+    try:
+        pc_index.upsert(
+            vectors=[{
+                "id": query_hash,
+                "values": query_dense_embedding,
+                "sparse_values": query_sparse_embedding,
+                "metadata": {
+                    'answer': response,
+                    "query": query,
+                    "source_deps": True
+                }
+            }],
+            namespace=PINECONE_CACHE_NAMESPACE
+        )
+        print(f"Stored in cache for query hash: {query_hash}")
 
-        if final_score > best_final_score:
-            best_final_score = final_score
-            best_response = result["response"]
-
-    if best_final_score >= CACHE_FINAL_THRESHOLD:
-        logger.info(f"Cache hit: hybrid match (score: {best_final_score:.3f})")
-        return True, best_response
-    else:
-        logger.info(f"Cache miss: hybrid score {best_final_score:.3f} below threshold")
-        return False, None
-
-def store_in_cache(index, query, response, query_dense_embedding, query_sparse_embedding=None):
-
-    store_in_vectorstore(index, query, response, query_dense_embedding)
-    logger.info(f"Stored in cache: {query[:50]}...")
+    except Exception as e:
+        print(f"Error storing in cache: {e}")
