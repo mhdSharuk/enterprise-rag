@@ -197,16 +197,13 @@ def hybrid_score_norm(dense, sparse_indices, sparse_values, alpha):
 
     dense_arr = np.array(dense)
 
-    if sparse_indices is not None:
-        sparse_val_arr = np.array(sparse_values)
-        h_dense = (dense_arr * alpha).tolist()
-        h_sparse = {
-            "indices": sparse_indices,
-            "values": (sparse_val_arr * (1 - alpha)).tolist()
-        }
-        return h_dense, h_sparse
-    else:
-        return dense_arr.tolist(), {"indices": [], "values": []}
+    sparse_val_arr = np.array(sparse_values)
+    h_dense = (dense_arr * alpha).tolist()
+    h_sparse = {
+        "indices": sparse_indices,
+        "values": (sparse_val_arr * (1 - alpha)).tolist()
+    }
+    return h_dense, h_sparse
     
 def get_embeddings(dense_embedding_tokenizer, 
                    dense_embedding_model, 

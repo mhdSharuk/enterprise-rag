@@ -14,7 +14,8 @@ MODEL_STORE = Path("model_store")
 RERANKER_PATH = MODEL_STORE / RERANKING_MODEL.replace("/", "_")
 
 class RerankResult:
-    def __init__(self, model_name: str, documents: list, scores: list, logits):
+    def __init__(self, model_name: str, documents: list, 
+                 scores: list, logits, text_field = 'chunk_text'):
         self.model = model_name        
         self.data = sorted(
             [
@@ -22,8 +23,9 @@ class RerankResult:
                     "score"      : float(score), 
                     "logit"      : float(logit),    
                     "id"         : docs["id"], 
-                    "chunk_text" : docs["chunk_text"],
-                    'doc_id'     : docs['doc_id']
+                    "chunk_text" : docs[text_field],
+                    "response"   : docs.get('answer'), # For cache response
+                    "doc_id"     : docs.get('doc_id')
                 }
                 for logit, score, docs in zip(logits, scores, documents)
                 # if score >= RERANK_THRESHOLD
@@ -31,13 +33,11 @@ class RerankResult:
             key=lambda x: x["score"],
             reverse=True
         )
-
+        
         self.data = self.data[:RERANK_TOP_N]
 
     def __repr__(self):
         return f"RerankResult(model='{self.model}', data={self.data})"
-
-
 
 def load_local_reranker():
     provider = get_onnx_provider()
@@ -81,9 +81,12 @@ def load_local_reranker():
 
     return tokenizer, model
 
-def rerank_local(tokenizer, model, query: str, documents: list[dict], batch_size: int = 4) -> RerankResult:
+def rerank_local(tokenizer, model, query: str, 
+                documents: list[dict],
+                text_field = 'chunk_text', 
+                batch_size: int = 4) -> RerankResult:
     all_scores = []
-    doc_texts = [doc["chunk_text"] for doc in documents]
+    doc_texts = [doc[text_field] for doc in documents]
     doc_ids = [doc["id"] for doc in documents]
 
     for i in range(0, len(doc_texts), batch_size):
@@ -94,7 +97,6 @@ def rerank_local(tokenizer, model, query: str, documents: list[dict], batch_size
             batch_docs,
             padding=True,
             truncation=True,
-            # max_length=512,
             return_tensors="np" 
         )
 
@@ -106,10 +108,11 @@ def rerank_local(tokenizer, model, query: str, documents: list[dict], batch_size
 
     probs = (1 / (1 + np.exp(-np.array(all_scores)))).tolist()
 
-    result = RerankResult(RERANKING_MODEL, documents, probs, all_scores)
+    result = RerankResult(RERANKING_MODEL, 
+                          documents, probs, 
+                          all_scores, text_field)
 
     return result
-
 
 def rerank_pinecone(pc: Pinecone, query: str, documents: list[dict], top_n: int = RERANK_TOP_N) -> RerankResult:
     result = pc.inference.rerank(

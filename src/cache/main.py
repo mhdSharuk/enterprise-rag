@@ -1,13 +1,19 @@
 import hashlib
+import traceback
 from src.utils.logger import logger
 from src.cache.config import (
     CACHE_SCORE_THRESHOLD,
     CACHE_SEMANTIC_TOP_K,
     PINECONE_CACHE_NAMESPACE
 )
+from pprint import pprint
+from src.retrieval.reranker import rerank_local
 
-
-def check_cache(pc_index, query_dense_embedding, query_sparse_embedding):
+def check_cache(pc_index, query, 
+                query_dense_embedding, 
+                query_sparse_embedding,
+                reranker_tokenizer, 
+                reranker_model):
 
     try:
         response = pc_index.query(
@@ -28,22 +34,30 @@ def check_cache(pc_index, query_dense_embedding, query_sparse_embedding):
                 "id": m["id"],
                 "score": m["score"],
                 "cached_query": m["metadata"]["query"],
-                "response": m["metadata"]["answer"],
+                "answer": m["metadata"]["answer"],
+                "source_deps": m['metadata']['source_deps']
             })
     
-        filtered_results = [
-            result for result in cache_results if result["score"] >= CACHE_SCORE_THRESHOLD
-        ]
+        
+        cache_reranked = rerank_local(reranker_tokenizer, 
+                                    reranker_model, 
+                                    query, 
+                                    cache_results, 
+                                    text_field='cached_query')
 
-        if not filtered_results:
-            logger.info("Cache miss: no semantic matches above threshold")
-            return False, None
+  
+        cache_reranked_filtered = [res for res in cache_reranked.data if res['score'] >= CACHE_SCORE_THRESHOLD]
 
-        return True, filtered_results[0]["response"]
+        if cache_reranked_filtered:
+            return (True, cache_reranked_filtered, 
+                    cache_reranked_filtered[0]["response"])
+        else:
+            return False, [], None
 
     except Exception as err:
-        print(f"Error in check_cache : {err}")
-        return False, None
+        logger.error(f"Error in check_cache")
+        traceback.print_exc()
+        return False, [], None
 
 def store_in_cache(pc_index, query, response, 
                    query_dense_embedding, 
