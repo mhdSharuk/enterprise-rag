@@ -45,9 +45,11 @@ def query_all_sources(index, dense_vector,
     documents = [
         {
             "id": m["id"],
+            'doc_id': m['metadata']['dataset_doc_uuid'],
             "score": m["score"],
+            'user_access': m['metadata']['user_access'],
             "chunk_text": m["metadata"]["text"],
-            'doc_id': m['metadata']['dataset_doc_uuid']
+            
         }
         for m in matches
     ]
