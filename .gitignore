@@ -32,8 +32,8 @@ venv.bak/
 
 # Jupyter
 .ipynb_checkpoints/
-*.ipynb
-
+# *.ipynb
+test/
 # IDE
 .idea/
 .vscode/
