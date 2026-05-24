@@ -19,37 +19,41 @@ def get_pinecone_index():
         return None, None
 
 
+
 def query_all_sources(index, dense_vector, 
-                      sparse_vector = None, 
+                      sparse_vector,
+                      current_user_name, 
                       top_k = TOP_K_PER_SOURCE) -> list[dict]:
     futures = []
-    for source in SOURCES:        
-        future = index.query(
-            top_k=top_k,
-            vector=dense_vector,
-            sparse_vector=sparse_vector if sparse_vector and sparse_vector["indices"] else None,
-            include_values=False,
-            include_metadata=True,
-            filter={"source": {"$eq": source}},
-            async_req=True,
-            namespace=PINECONE_NAMESPACE
-        )
-        futures.append(future)
+    # for source in SOURCES:        
+    future = index.query(
+        top_k=top_k,
+        vector=dense_vector,
+        sparse_vector=sparse_vector,
+        include_values=False,
+        include_metadata=True,
+        filter={"user_access": {"$in": [current_user_name]}},
+        async_req=True,
+        namespace=PINECONE_NAMESPACE
+    )
+    futures.append(future)
 
     documents = []
-    for future in futures:
-        response = future.get()
-        matches = response.to_dict()["matches"]
-        docs = [
-            {
-                "id": m["id"],
-                "score": m["score"],
-                "chunk_text": m["metadata"]["text"],
-                'doc_id': m['metadata']['dataset_doc_uuid']
-            }
-            for m in matches
-        ]
-        documents.extend(docs)
+    # for future in futures:
+    response = future.get()
+    matches = response.to_dict()["matches"]
+    documents = [
+        {
+            "id": m["id"],
+            'doc_id': m['metadata']['dataset_doc_uuid'],
+            "score": m["score"],
+            'user_access': m['metadata']['user_access'],
+            "chunk_text": m["metadata"]["text"],
+            
+        }
+        for m in matches
+    ]
+    # documents.extend(docs)
 
     return sorted(documents, key=lambda x: x["score"], reverse=True)
 

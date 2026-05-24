@@ -20,15 +20,17 @@ class RerankResult:
         self.data = sorted(
             [
                 {
+                    "id"         : docs["id"], 
                     "score"      : float(score), 
                     "logit"      : float(logit),    
-                    "id"         : docs["id"], 
+                    "doc_id"     : docs.get('doc_id'),
+                    'user_access': docs.get('user_access'),
                     "chunk_text" : docs[text_field],
                     "response"   : docs.get('answer'), # For cache response
-                    "doc_id"     : docs.get('doc_id')
+                    'source_deps': docs.get('source_deps')
                 }
                 for logit, score, docs in zip(logits, scores, documents)
-                # if score >= RERANK_THRESHOLD
+                if score >= RERANK_THRESHOLD
             ],
             key=lambda x: x["score"],
             reverse=True
