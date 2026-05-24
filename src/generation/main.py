@@ -22,7 +22,7 @@ def initialize_search_pipeline():
             sparse_input_names, reranker)
 
 
-def run_query(query, pc, pc_index, 
+def run_query(user_name, query, pc, pc_index, 
             dense_tokenizer, dense_model, 
             sparse_tokenizer, sparse_model,
             sparse_input_names, reranker_model) -> tuple:
@@ -57,6 +57,7 @@ def run_query(query, pc, pc_index,
       print(f'Cache Missed. Proceeding to LLM')
 
       retrieved_docs = retrieve(
+          user_name=user_name,
           query=query,
           query_dense_embedding=query_dense_embedding,
           query_sparse_embedding=query_sparse_embedding,
@@ -85,7 +86,7 @@ if __name__ == "__main__":
     
     query = "What is the name of the new metric added so SRE can track when server-side streaming sessions get finalized due to hitting the time limit?"
 
-    user = 'Liam Chen'
+    user_name = 'Liam Chen'
 
     # start_time = time.perf_counter()
     # (is_cache_hit, retrieved_docs, 
@@ -105,7 +106,7 @@ if __name__ == "__main__":
     # print("\n=== Answer ===")
     # print(answer)
 
-    retrieved_docs = run_query(query, pc, pc_index, 
+    retrieved_docs = run_query(user_name, query, pc, pc_index, 
                                 dense_tokenizer, dense_model, 
                                 sparse_tokenizer, sparse_model, 
                                 sparse_input_names, reranker)
