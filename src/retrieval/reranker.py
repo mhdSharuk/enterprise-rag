@@ -27,10 +27,10 @@ class RerankResult:
                     'user_access': docs.get('user_access'),
                     "chunk_text" : docs[text_field],
                     "response"   : docs.get('answer'), # For cache response
-                    
+                    'source_deps': docs.get('source_deps')
                 }
                 for logit, score, docs in zip(logits, scores, documents)
-                # if score >= RERANK_THRESHOLD
+                if score >= RERANK_THRESHOLD
             ],
             key=lambda x: x["score"],
             reverse=True
