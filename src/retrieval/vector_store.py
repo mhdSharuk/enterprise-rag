@@ -1,5 +1,23 @@
+from tqdm import tqdm
+from pinecone import Pinecone, ServerlessSpec
+
 from src.utils.logger import logger
-from src.retrieval.config import (SOURCES, TOP_K_PER_SOURCE, PINECONE_NAMESPACE)
+from src.retrieval.config import (PINECONE_API_KEY, PINECONE_INDEX_NAME, 
+                                  SOURCES, TOP_K_PER_SOURCE, PINECONE_NAMESPACE)
+
+
+def get_pinecone_index():
+    try:
+        logger.info("Connecting to Pinecone...")
+        pc = Pinecone(api_key=PINECONE_API_KEY)
+        return pc, pc.Index(PINECONE_INDEX_NAME) 
+    
+    except Exception as error:
+        logger.error(f'Error occured')
+        logger.error(error)
+
+        return None, None
+
 
 
 def query_all_sources(index, dense_vector, 
