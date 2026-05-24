@@ -9,7 +9,7 @@ from src.cache.config import (
 from pprint import pprint
 from src.retrieval.reranker import rerank_local
 
-def check_cache(pc_index, query, 
+def check_cache(user_name, pc_index, query, 
                 query_dense_embedding, 
                 query_sparse_embedding,
                 reranker_tokenizer, 
@@ -22,37 +22,42 @@ def check_cache(pc_index, query,
             top_k=CACHE_SEMANTIC_TOP_K,
             include_values=False,
             include_metadata=True,
+            filter={"user_access": {"$in": [user_name]}},
             namespace=PINECONE_CACHE_NAMESPACE,
             async_req=False
         )
 
         matches = response.to_dict()["matches"]
 
-        cache_results = []
-        for m in matches:
-            cache_results.append({
-                "id": m["id"],
-                "score": m["score"],
-                "cached_query": m["metadata"]["query"],
-                "answer": m["metadata"]["answer"],
-                "source_deps": m['metadata']['source_deps']
-            })
+        if matches:
+          cache_results = []
+          for m in matches:
+              cache_results.append({
+                  "id": m["id"],
+                  "score": m["score"],
+                  "cached_query": m["metadata"]["query"],
+                  "answer": m["metadata"]["answer"],
+                  "source_deps": m['metadata']['source_deps']
+              })
     
         
-        cache_reranked = rerank_local(reranker_tokenizer, 
-                                    reranker_model, 
-                                    query, 
-                                    cache_results, 
-                                    text_field='cached_query')
+          cache_reranked = rerank_local(reranker_tokenizer, 
+                                      reranker_model, 
+                                      query, 
+                                      cache_results, 
+                                      text_field='cached_query')
 
   
-        cache_reranked_filtered = [res for res in cache_reranked.data if res['score'] >= CACHE_SCORE_THRESHOLD]
+          cache_reranked_filtered = [res for res in cache_reranked.data if res['score'] >= CACHE_SCORE_THRESHOLD]
 
-        if cache_reranked_filtered:
-            return (True, cache_reranked_filtered, 
-                    cache_reranked_filtered[0]["response"])
+          if cache_reranked_filtered:
+              return (True, cache_reranked_filtered, 
+                      cache_reranked_filtered[0]["response"])
+          else:
+              return False, [], None
+
         else:
-            return False, [], None
+          return False, [], None
 
     except Exception as err:
         logger.error(f"Error in check_cache")
@@ -62,7 +67,7 @@ def check_cache(pc_index, query,
 def store_in_cache(pc_index, query, response, 
                    query_dense_embedding, 
                    query_sparse_embedding,
-                   sources):
+                   sources, user_access):
 
     query_hash = hashlib.sha256(query.encode()).hexdigest()
 
@@ -75,7 +80,8 @@ def store_in_cache(pc_index, query, response,
                 "metadata": {
                     'answer': response,
                     "query": query,
-                    "source_deps": True
+                    "source_deps": sources,
+                    "user_access": user_access
                 }
             }],
             namespace=PINECONE_CACHE_NAMESPACE

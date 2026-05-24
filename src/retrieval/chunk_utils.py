@@ -1,17 +1,18 @@
 import re
 from tqdm import tqdm
 
-def merge_ranked_chunks(result) -> list[dict]:
+def merge_ranked_chunks(results) -> list[dict]:
     docs = [
         {
-            "id": d["id"],
-            "doc_id": d["doc_id"],
-            "score": d["score"],
-            "text": d.get("chunk_text", ""),
-            "base_id": d["id"].rsplit("_chunk", 1)[0],
-            "chunk_num": int(d["id"].rsplit("_", 1)[-1])
+            "id": result["id"],
+            "doc_id": result["doc_id"],
+            "score": result["score"],
+            "base_id": result["id"].rsplit("_chunk", 1)[0],
+            "chunk_num": int(result["id"].rsplit("_", 1)[-1]),
+            "user_access": result.get("user_access", None),
+            "text": result.get("chunk_text", ""),
         }
-        for d in result
+        for result in results
     ]
 
     grouped = {}
@@ -39,6 +40,7 @@ def merge_ranked_chunks(result) -> list[dict]:
             "doc_id": group[0]["doc_id"],
             "chunk_range": (group[0]["chunk_num"], group[-1]["chunk_num"]),
             "score": max(c["score"] for c in group),
+            "user_access": group[0]["user_access"],
             "text": " ".join(c["text"] for c in group)
         })
 
