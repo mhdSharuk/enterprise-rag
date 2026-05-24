@@ -37,7 +37,8 @@ def check_cache(user_name, pc_index, query,
                   "score": m["score"],
                   "cached_query": m["metadata"]["query"],
                   "answer": m["metadata"]["answer"],
-                  "source_deps": m['metadata']['source_deps']
+                  "source_deps": m['metadata']['source_deps'],
+                  "user_access": m['metadata']['user_access']
               })
     
         
