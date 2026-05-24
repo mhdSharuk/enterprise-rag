@@ -37,6 +37,7 @@ def run_query(user_name, query, pc, pc_index,
     )
 
     cache_hit, cache_docs, cached_response = check_cache(
+        user_name,
         pc_index = pc_index,
         query = query,
         query_dense_embedding = query_dense_embedding,
@@ -45,8 +46,9 @@ def run_query(user_name, query, pc, pc_index,
         reranker_model = reranker_model[1]
     )
 
-    cache_hit = False
+    # cache_hit = False
     if cache_hit:
+      print('Cache Hit')
       return (cache_hit, 
               cache_docs,
               cached_response,
@@ -65,50 +67,22 @@ def run_query(user_name, query, pc, pc_index,
           reranker=reranker_model
       )
 
-      merged_docs = merge_ranked_chunks(retrieved_docs.data)
-      return merged_docs
-    #   sources = [doc['id'] for doc in merged_docs]
+      if not retrieved_docs.data:
+        print('No permission')
+        return (False, [], 
+                'You dont have the permission to access the file',
+                0, 'Access restricted')
+      else:
 
-    #   answer, total_tokens, finish_reason = generate_response(query, merged_docs)
+        merged_docs = merge_ranked_chunks(retrieved_docs.data)
+        sources = [doc['id'] for doc in merged_docs]
 
-    # #   store_in_cache(pc_index, query, answer, 
-    # #         query_dense_embedding, 
-    # #         query_sparse_embedding,
-    # #         sources)
+        answer, total_tokens, finish_reason = generate_response(query, merged_docs)
+        user_access = merged_docs[0]['user_access']
 
-    #   return False, merged_docs, answer, total_tokens, finish_reason
+        store_in_cache(pc_index, query, answer, 
+              query_dense_embedding, 
+              query_sparse_embedding,
+              sources, user_access)
 
-if __name__ == "__main__":
-    (pc, pc_index, dense_tokenizer, dense_model, 
-     sparse_tokenizer, sparse_model, sparse_input_names, 
-     reranker) = initialize_search_pipeline()
-
-    
-    query = "What is the name of the new metric added so SRE can track when server-side streaming sessions get finalized due to hitting the time limit?"
-
-    user_name = 'Liam Chen'
-
-    # start_time = time.perf_counter()
-    # (is_cache_hit, retrieved_docs, 
-    # answer, total_tokens, 
-    # finish_reason) = run_query(query, pc, pc_index, 
-    #                             dense_tokenizer, dense_model, 
-    #                             sparse_tokenizer, sparse_model, 
-    #                             sparse_input_names, reranker)
-
-    # end_time = time.perf_counter()
-
-    # print(f'Time taken: {end_time - start_time:.2f} seconds')
-    # print(f'Is Cache hit : {is_cache_hit}')
-    # print('Total tokens used:', total_tokens)
-    # print('Finish reason:', finish_reason)
-
-    # print("\n=== Answer ===")
-    # print(answer)
-
-    retrieved_docs = run_query(user_name, query, pc, pc_index, 
-                                dense_tokenizer, dense_model, 
-                                sparse_tokenizer, sparse_model, 
-                                sparse_input_names, reranker)
-
-
+        return False, merged_docs, answer, total_tokens, finish_reason

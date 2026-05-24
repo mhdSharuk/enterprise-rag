@@ -1,3 +1,4 @@
+#api.py
 import time
 from contextlib import asynccontextmanager
 
@@ -7,6 +8,7 @@ from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
 
 from src.generation.main import initialize_search_pipeline, run_query
+from src.retrieval import query
 
 
 # Global state to hold the initialized pipeline
@@ -16,6 +18,7 @@ pipeline = None
 class QueryRequest(BaseModel):
     """Request model for query endpoint."""
     question: str = Field(..., description="The question to ask the RAG system")
+    user_name: str = Field(..., description="The name of the user making the request")
 
 
 class QueryResponse(BaseModel):
@@ -102,6 +105,12 @@ async def query_endpoint(request: QueryRequest):
             detail="Question cannot be empty"
         )
 
+    if not request.user_name.strip():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="user_name cannot be empty"
+        )
+
     try:
         start_time = time.perf_counter()
 
@@ -111,15 +120,12 @@ async def query_endpoint(request: QueryRequest):
          reranker) = pipeline
 
         # Run the query
-        (is_cache_hit, retrieved_docs, answer,
-         tokens_used, finish_reason) = run_query(
-            query=request.question,
-            pc=pc, pc_index=pc_index,
-            dense_tokenizer=dense_tokenizer, dense_model=dense_model,
-            sparse_tokenizer=sparse_tokenizer, sparse_model=sparse_model,
-            sparse_input_names=sparse_input_names,
-            reranker_model=reranker
-        )
+        (is_cache_hit, retrieved_docs,
+        answer, total_tokens,
+        finish_reason) = run_query(request.user_name, request.question, pc, pc_index,
+                                dense_tokenizer, dense_model,
+                                sparse_tokenizer, sparse_model,
+                                sparse_input_names, reranker)
 
         end_time = time.perf_counter()
         time_taken = end_time - start_time
@@ -127,7 +133,7 @@ async def query_endpoint(request: QueryRequest):
         return QueryResponse(
             answer=answer,
             is_cached=is_cache_hit,
-            tokens_used=tokens_used,
+            tokens_used=total_tokens,
             time_taken=round(time_taken, 2)
         )
 
