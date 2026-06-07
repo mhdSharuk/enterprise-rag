@@ -1,0 +1,280 @@
+{
+  "communities": {
+    "0": [
+      "api",
+      "api_custom_swagger_ui_html",
+      "api_health_check",
+      "api_lifespan",
+      "api_query_endpoint",
+      "api_queryrequest",
+      "api_queryresponse",
+      "api_rationale_19",
+      "api_rationale_25",
+      "api_rationale_34",
+      "api_rationale_70",
+      "api_rationale_82",
+      "api_rationale_91",
+      "api_root",
+      "basemodel",
+      "fastapi",
+      "htmlresponse"
+    ],
+    "1": [
+      "document",
+      "ingestion_key_extractor",
+      "ingestion_key_extractor_extract_keys_from_schema",
+      "ingestion_key_extractor_extract_keys_with_llm",
+      "ingestion_main",
+      "ingestion_main_get_source",
+      "ingestion_main_process_all_files",
+      "ingestion_main_process_file",
+      "ingestion_text_processor",
+      "ingestion_text_processor_convert_to_text",
+      "ingestion_text_processor_split_text",
+      "ingestion_vector_store",
+      "ingestion_vector_store_get_pinecone_index",
+      "ingestion_vector_store_upsert_vectors",
+      "path"
+    ],
+    "2": [
+      "generation_main",
+      "generation_main_initialize_search_pipeline",
+      "retrieval_embedder",
+      "retrieval_embedder_get_dense_embedding",
+      "retrieval_embedder_get_embeddings",
+      "retrieval_embedder_get_sparse_embedding",
+      "retrieval_embedder_hybrid_score_norm",
+      "retrieval_embedder_load_dense_embedding_model",
+      "retrieval_embedder_load_sparse_embedding_model",
+      "retrieval_embedder_rationale_73",
+      "retrieval_reranker_load_local_reranker",
+      "utils_check_device",
+      "utils_check_device_get_onnx_provider",
+      "utils_check_device_rationale_6"
+    ],
+    "3": [
+      "ui",
+      "ui_check_pipeline_status",
+      "ui_fetch_langfuse_scores",
+      "ui_inject_global_styles",
+      "ui_load_employees",
+      "ui_main",
+      "ui_query_rag",
+      "ui_rationale_22",
+      "ui_rationale_76",
+      "ui_render_assistant_bubble",
+      "ui_render_pills",
+      "ui_render_score_card",
+      "ui_render_scores_section",
+      "ui_render_user_bubble"
+    ],
+    "4": [
+      "cache_main",
+      "cache_main_check_cache",
+      "cache_main_store_in_cache",
+      "generation_generator",
+      "generation_generator_build_context_block",
+      "generation_generator_generate_response",
+      "generation_main_run_query",
+      "retrieval_chunk_utils",
+      "retrieval_chunk_utils_get_neighbour_chunk_ids",
+      "retrieval_chunk_utils_merge_ranked_chunks",
+      "retrieval_query",
+      "retrieval_query_retrieve",
+      "retrieval_reranker_rerank_local"
+    ],
+    "5": [
+      "retrieval_reranker",
+      "retrieval_reranker_py_pinecone",
+      "retrieval_reranker_rerank_pinecone",
+      "retrieval_reranker_rerankresult",
+      "retrieval_reranker_rerankresult_init",
+      "retrieval_reranker_rerankresult_repr"
+    ],
+    "6": [
+      "ingestion_embedder",
+      "ingestion_embedder_get_dense_embedding",
+      "ingestion_embedder_get_sparse_embedding",
+      "ingestion_embedder_load_embedding_model",
+      "ingestion_embedder_py_pinecone"
+    ],
+    "7": [
+      "logger",
+      "utils_logger",
+      "utils_logger_get_logger",
+      "utils_logger_rationale_1"
+    ],
+    "8": [
+      "retrieval_vector_store",
+      "retrieval_vector_store_fetch_vectors_by_id",
+      "retrieval_vector_store_get_pinecone_index",
+      "retrieval_vector_store_query_all_sources"
+    ],
+    "9": [
+      "init",
+      "init_rationale_1"
+    ],
+    "10": [
+      "utils_init",
+      "utils_init_rationale_1"
+    ],
+    "11": [
+      "cache_config"
+    ],
+    "12": [
+      "cache_init"
+    ],
+    "13": [
+      "generation_config"
+    ],
+    "14": [
+      "ingestion_config"
+    ],
+    "15": [
+      "ingestion_init"
+    ],
+    "16": [
+      "ingestion_prompts"
+    ],
+    "17": [
+      "retrieval_config"
+    ],
+    "18": [
+      "retrieval_init"
+    ]
+  },
+  "cohesion": {
+    "0": 0.14705882352941177,
+    "1": 0.18095238095238095,
+    "2": 0.2087912087912088,
+    "3": 0.25274725274725274,
+    "4": 0.19230769230769232,
+    "5": 0.4666666666666667,
+    "6": 0.5,
+    "7": 0.5,
+    "8": 0.5,
+    "9": 1.0,
+    "10": 1.0,
+    "11": 1.0,
+    "12": 1.0,
+    "13": 1.0,
+    "14": 1.0,
+    "15": 1.0,
+    "16": 1.0,
+    "17": 1.0,
+    "18": 1.0
+  },
+  "gods": [
+    {
+      "id": "ui_main",
+      "label": "main()",
+      "degree": 10
+    },
+    {
+      "id": "generation_main_run_query",
+      "label": "run_query()",
+      "degree": 8
+    },
+    {
+      "id": "ingestion_main_process_file",
+      "label": "process_file()",
+      "degree": 8
+    },
+    {
+      "id": "api_query_endpoint",
+      "label": "query_endpoint()",
+      "degree": 5
+    },
+    {
+      "id": "generation_main_initialize_search_pipeline",
+      "label": "initialize_search_pipeline()",
+      "degree": 5
+    },
+    {
+      "id": "retrieval_embedder_get_embeddings",
+      "label": "get_embeddings()",
+      "degree": 5
+    },
+    {
+      "id": "retrieval_reranker_rerankresult",
+      "label": "RerankResult",
+      "degree": 5
+    },
+    {
+      "id": "utils_check_device_get_onnx_provider",
+      "label": "get_onnx_provider()",
+      "degree": 5
+    },
+    {
+      "id": "api_queryrequest",
+      "label": "QueryRequest",
+      "degree": 4
+    },
+    {
+      "id": "api_queryresponse",
+      "label": "QueryResponse",
+      "degree": 4
+    }
+  ],
+  "surprises": [
+    {
+      "source": "lifespan()",
+      "target": "initialize_search_pipeline()",
+      "source_files": [
+        "api.py",
+        "generation/main.py"
+      ],
+      "confidence": "INFERRED",
+      "relation": "calls",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories; bridges separate communities"
+    },
+    {
+      "source": "query_endpoint()",
+      "target": "run_query()",
+      "source_files": [
+        "api.py",
+        "generation/main.py"
+      ],
+      "confidence": "INFERRED",
+      "relation": "calls",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories; bridges separate communities"
+    },
+    {
+      "source": "run_query()",
+      "target": "store_in_cache()",
+      "source_files": [
+        "generation/main.py",
+        "cache/main.py"
+      ],
+      "confidence": "INFERRED",
+      "relation": "calls",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories; peripheral node `store_in_cache()` unexpectedly reaches hub `run_query()`"
+    },
+    {
+      "source": "run_query()",
+      "target": "merge_ranked_chunks()",
+      "source_files": [
+        "generation/main.py",
+        "retrieval/chunk_utils.py"
+      ],
+      "confidence": "INFERRED",
+      "relation": "calls",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories; peripheral node `merge_ranked_chunks()` unexpectedly reaches hub `run_query()`"
+    },
+    {
+      "source": "run_query()",
+      "target": "get_embeddings()",
+      "source_files": [
+        "generation/main.py",
+        "retrieval/embedder.py"
+      ],
+      "confidence": "INFERRED",
+      "relation": "calls",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories; bridges separate communities"
+    }
+  ],
+  "tokens": {
+    "input": 0,
+    "output": 0
+  }
+}
