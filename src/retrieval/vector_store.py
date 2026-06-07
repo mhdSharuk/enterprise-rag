@@ -20,40 +20,40 @@ def get_pinecone_index():
 
 
 
-def query_all_sources(index, dense_vector, 
+def query_all_sources(index, dense_vector,
                       sparse_vector,
-                      current_user_name, 
+                      current_user_name,
                       top_k = TOP_K_PER_SOURCE) -> list[dict]:
-    futures = []
-    # for source in SOURCES:        
-    future = index.query(
-        top_k=top_k,
-        vector=dense_vector,
-        sparse_vector=sparse_vector,
-        include_values=False,
-        include_metadata=True,
-        filter={"user_access": {"$in": [current_user_name]}},
-        async_req=True,
-        namespace=PINECONE_NAMESPACE
-    )
-    futures.append(future)
+    from src.utils.metrics import PINECONE_LATENCY, ERROR_COUNT
 
-    documents = []
-    # for future in futures:
-    response = future.get()
-    matches = response.to_dict()["matches"]
-    documents = [
-        {
-            "id": m["id"],
-            'doc_id': m['metadata']['dataset_doc_uuid'],
-            "score": m["score"],
-            'user_access': m['metadata']['user_access'],
-            "chunk_text": m["metadata"]["text"],
-            
-        }
-        for m in matches
-    ]
-    # documents.extend(docs)
+    try:
+        with PINECONE_LATENCY.time():
+            future = index.query(
+                top_k=top_k,
+                vector=dense_vector,
+                sparse_vector=sparse_vector,
+                include_values=False,
+                include_metadata=True,
+                filter={"user_access": {"$in": [current_user_name]}},
+                async_req=True,
+                namespace=PINECONE_NAMESPACE
+            )
+            response = future.get()
+
+        matches = response.to_dict()["matches"]
+        documents = [
+            {
+                "id": m["id"],
+                'doc_id': m['metadata']['dataset_doc_uuid'],
+                "score": m["score"],
+                'user_access': m['metadata']['user_access'],
+                "chunk_text": m["metadata"]["text"],
+            }
+            for m in matches
+        ]
+    except Exception:
+        ERROR_COUNT.labels(component="pinecone").inc()
+        raise
 
     return sorted(documents, key=lambda x: x["score"], reverse=True)
 

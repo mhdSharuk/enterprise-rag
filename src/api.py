@@ -4,11 +4,12 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, status
 from fastapi.openapi.docs import get_swagger_ui_html
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, Response
 from pydantic import BaseModel, Field
+from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
 
 from src.generation.main import initialize_search_pipeline, run_query
-from src.retrieval import query
+from src.utils.metrics import REQUEST_COUNT, REQUEST_LATENCY, ERROR_COUNT
 
 
 # Global state to hold the initialized pipeline
@@ -112,23 +113,26 @@ async def query_endpoint(request: QueryRequest):
         )
 
     try:
-        start_time = time.perf_counter()
+        with REQUEST_LATENCY.time():
+            # Unpack pipeline components
+            (pc, pc_index, dense_tokenizer, dense_model,
+             sparse_tokenizer, sparse_model, sparse_input_names,
+             reranker) = pipeline
 
-        # Unpack pipeline components
-        (pc, pc_index, dense_tokenizer, dense_model,
-         sparse_tokenizer, sparse_model, sparse_input_names,
-         reranker) = pipeline
+            start_time = time.perf_counter()
 
-        # Run the query
-        (is_cache_hit, retrieved_docs,
-        answer, total_tokens,
-        finish_reason) = run_query(request.user_name, request.question, pc, pc_index,
-                                dense_tokenizer, dense_model,
-                                sparse_tokenizer, sparse_model,
-                                sparse_input_names, reranker)
+            # Run the query
+            (is_cache_hit, retrieved_docs,
+            answer, total_tokens,
+            finish_reason) = run_query(request.user_name, request.question, pc, pc_index,
+                                    dense_tokenizer, dense_model,
+                                    sparse_tokenizer, sparse_model,
+                                    sparse_input_names, reranker)
 
-        end_time = time.perf_counter()
-        time_taken = end_time - start_time
+            end_time = time.perf_counter()
+            time_taken = end_time - start_time
+
+        REQUEST_COUNT.labels(status="success").inc()
 
         return QueryResponse(
             answer=answer,
@@ -138,10 +142,18 @@ async def query_endpoint(request: QueryRequest):
         )
 
     except Exception as e:
+        REQUEST_COUNT.labels(status="error").inc()
+        ERROR_COUNT.labels(component="generation").inc()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error processing query: {str(e)}"
         )
+
+
+@app.get("/metrics", include_in_schema=False)
+async def metrics():
+    """Prometheus metrics endpoint."""
+    return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
 
 if __name__ == "__main__":

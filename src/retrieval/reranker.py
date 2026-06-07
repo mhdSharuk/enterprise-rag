@@ -83,36 +83,38 @@ def load_local_reranker():
 
     return tokenizer, model
 
-def rerank_local(tokenizer, model, query: str, 
+def rerank_local(tokenizer, model, query: str,
                 documents: list[dict],
-                text_field = 'chunk_text', 
+                text_field = 'chunk_text',
                 batch_size: int = 4) -> RerankResult:
-    all_scores = []
-    doc_texts = [doc[text_field] for doc in documents]
-    doc_ids = [doc["id"] for doc in documents]
+    from src.utils.metrics import RERANKER_LATENCY, ERROR_COUNT
 
-    for i in range(0, len(doc_texts), batch_size):
-        batch_docs = doc_texts[i : i + batch_size]
+    try:
+        with RERANKER_LATENCY.time():
+            all_scores = []
+            doc_texts = [doc[text_field] for doc in documents]
 
-        inputs = tokenizer(
-            [query] * len(batch_docs),
-            batch_docs,
-            padding=True,
-            truncation=True,
-            return_tensors="np" 
-        )
+            for i in range(0, len(doc_texts), batch_size):
+                batch_docs = doc_texts[i : i + batch_size]
 
-        outputs = model(**inputs)
-        
-        logits = outputs.logits.flatten()
+                inputs = tokenizer(
+                    [query] * len(batch_docs),
+                    batch_docs,
+                    padding=True,
+                    truncation=True,
+                    return_tensors="np"
+                )
 
-        all_scores.extend(logits)
+                outputs = model(**inputs)
+                logits = outputs.logits.flatten()
+                all_scores.extend(logits)
 
-    probs = (1 / (1 + np.exp(-np.array(all_scores)))).tolist()
+        probs = (1 / (1 + np.exp(-np.array(all_scores)))).tolist()
+        result = RerankResult(RERANKING_MODEL, documents, probs, all_scores, text_field)
 
-    result = RerankResult(RERANKING_MODEL, 
-                          documents, probs, 
-                          all_scores, text_field)
+    except Exception:
+        ERROR_COUNT.labels(component="reranker").inc()
+        raise
 
     return result
 

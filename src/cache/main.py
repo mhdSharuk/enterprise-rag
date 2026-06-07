@@ -6,7 +6,7 @@ from src.cache.config import (
     CACHE_SEMANTIC_TOP_K,
     PINECONE_CACHE_NAMESPACE
 )
-from pprint import pprint
+from src.utils.metrics import CACHE_HITS, CACHE_MISSES, ERROR_COUNT
 from src.retrieval.reranker import rerank_local
 
 def check_cache(user_name, pc_index, query, 
@@ -52,16 +52,20 @@ def check_cache(user_name, pc_index, query,
           cache_reranked_filtered = [res for res in cache_reranked.data if res['score'] >= CACHE_SCORE_THRESHOLD]
 
           if cache_reranked_filtered:
-              return (True, cache_reranked_filtered, 
+              CACHE_HITS.inc()
+              return (True, cache_reranked_filtered,
                       cache_reranked_filtered[0]["response"])
           else:
+              CACHE_MISSES.inc()
               return False, [], None
 
         else:
+          CACHE_MISSES.inc()
           return False, [], None
 
     except Exception as err:
-        logger.error(f"Error in check_cache")
+        ERROR_COUNT.labels(component="cache").inc()
+        logger.error(f"Error in check_cache: {err}")
         traceback.print_exc()
         return False, [], None
 
