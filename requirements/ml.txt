@@ -1,0 +1,7 @@
+-r base.txt
+# torch is installed before this file in Dockerfile with the CPU-only wheel URL
+# to avoid pulling the 2 GB CUDA build from PyPI
+transformers
+optimum[onnxruntime]
+huggingface_hub[hf_xet]
+hf_transfer

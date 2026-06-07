@@ -1,0 +1,7 @@
+pinecone
+langfuse
+python-dotenv
+numpy
+tqdm
+langchain-text-splitters
+langchain-core
