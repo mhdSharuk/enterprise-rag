@@ -6,37 +6,53 @@ A production-grade Retrieval-Augmented Generation (RAG) system for querying ente
 
 ## Architecture Overview
 
+### Query Pipeline
+
+```mermaid
+flowchart TD
+    User([User]) --> UI[Streamlit UI\nport 8501]
+    UI -->|POST /query| API[FastAPI Backend\nsrc/api.py]
+    API --> Embed[Embed Query\nDense ONNX + SPLADE Sparse]
+    Embed --> Cache{Semantic Cache\nPinecone + Reranker}
+    Cache -->|Hit ≥ 0.9| CachedAnswer([Return Cached Answer])
+    Cache -->|Miss| Retrieve[Hybrid Retrieval\n9 sources · top-5 each · async]
+    Retrieve --> Rerank[Cross-Encoder Reranking\nONNX]
+    Rerank --> Merge[Adjacent Chunk Merging]
+    Merge --> Generate[LLM Generation\nGroq API]
+    Generate --> StoreCache[Store in Cache]
+    StoreCache --> Answer([Answer + Metadata])
+    CachedAnswer --> Answer
 ```
-User Query
-    │
-    ▼
-┌─────────────────────────────────┐
-│         FastAPI Backend         │  ← src/api.py
-└─────────────────────────────────┘
-    │
-    ▼
-┌─────────────────────────────────┐
-│        Semantic Cache Check     │  ← src/cache/
-│  (Pinecone hybrid + reranker)   │
-└─────────────────────────────────┘
-    │ Cache Miss
-    ▼
-┌─────────────────────────────────┐
-│     Hybrid Retrieval            │  ← src/retrieval/
-│  Dense (ONNX) + Sparse (SPLADE) │
-│  → Pinecone query per source    │
-│  → Cross-encoder reranking      │
-│  → Chunk merging                │
-└─────────────────────────────────┘
-    │
-    ▼
-┌─────────────────────────────────┐
-│        LLM Generation           │  ← src/generation/
-│    (Groq API via OpenAI SDK)    │
-└─────────────────────────────────┘
-    │
-    ▼
-  Answer + Metadata
+
+### Docker Services
+
+```mermaid
+graph TD
+    Browser([Browser]) -->|:8501| UI
+
+    subgraph Containers
+        UI[ui\nStreamlit :8501]
+        API[api\nFastAPI :8000]
+        Ingest[ingestion\none-shot job\nprofile: ingestion]
+    end
+
+    UI -->|API_URL=http://api:8000| API
+
+    API --> Pinecone[(Pinecone\nVector DB)]
+    API --> Groq[Groq LLM API]
+    API --> Langfuse[Langfuse\nObservability]
+
+    subgraph Host Filesystem
+        MS[./model_store\nONNX Models]
+        Data[./data\nJSON Documents]
+        Env[.env\nSecrets]
+    end
+
+    MS -->|bind mount| API
+    MS -->|bind mount| Ingest
+    Data -->|bind mount read-only| Ingest
+    Env -->|env_file| API
+    Env -->|env_file| UI
 ```
 
 ---
@@ -76,15 +92,21 @@ User Query
 │   │   └── config.py
 │   │
 │   ├── evaluate/               # Evaluation framework
-│   │   ├── evaluate_retrieval.py   # Recall@K, MRR, contextual recall
-│   │   ├── llm_metrics.py          # Faithfulness, answer correctness, relevancy
-│   │   ├── utils.py                # Batch embedding & reranking helpers
-│   │   └── config.py
+│   │   └── enterprise-rag-evaluation.ipynb
 │   │
 │   └── utils/
 │       ├── logger.py           # Centralized logging
 │       └── check_device.py     # CUDA / CPU ONNX provider detection
 │
+├── docker/
+│   ├── Dockerfile.api          # FastAPI + full ONNX/ML stack
+│   └── Dockerfile.ui           # Streamlit only (lightweight)
+├── requirements/
+│   ├── base.txt                # Shared deps
+│   ├── ml.txt                  # ONNX/transformers stack
+│   ├── api.txt                 # API + ML
+│   └── ui.txt                  # UI only
+├── docker-compose.yml
 ├── requirements.txt
 └── .gitignore
 ```
@@ -102,11 +124,6 @@ pip install -r requirements.txt
 > For GPU support with ONNX Runtime:
 > ```bash
 > pip install onnxruntime-gpu
-> ```
-
-> For llama-cpp-python (optional local inference):
-> ```bash
-> pip install llama-cpp-python --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu --no-cache-dir --force-reinstall
 > ```
 
 ### 2. Configure environment
@@ -154,21 +171,44 @@ LOG_LEVEL=INFO
 
 ## Running the System
 
-### Start the API server
+### With Docker (recommended)
+
+Ensure `./model_store/` exists with downloaded ONNX models and a `.env` file is present.
+
+```bash
+# Start API + UI
+docker compose up --build
+```
+
+| URL | Service |
+|---|---|
+| `http://localhost:8501` | Streamlit UI |
+| `http://localhost:8000/docs` | API Swagger UI |
+| `http://localhost:8000/health` | API health check |
+
+The API loads ONNX models on startup — allow ~1–2 minutes before the UI becomes responsive.
+
+**Run ingestion (one-shot, if Pinecone index is empty):**
+
+```bash
+docker compose --profile ingestion run --rm ingestion
+```
+
+---
+
+### Without Docker
+
+**Start the API server:**
 
 ```bash
 uvicorn src.api:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-The API will initialize the full pipeline on startup (model loading may take a minute).
-
-### Start the Streamlit UI
+**Start the Streamlit UI:**
 
 ```bash
 streamlit run src/ui.py
 ```
-
-Ensure the API server is running before starting the UI — the frontend queries `http://localhost:8000`.
 
 ---
 
@@ -207,7 +247,24 @@ Swagger UI available at `http://localhost:8000/docs`.
 
 Place your JSON documents under a `./data/` directory structured by source (e.g. `data/confluence/`, `data/github/`, etc.).
 
-Run the ingestion pipeline:
+### Ingestion Pipeline
+
+```mermaid
+flowchart TD
+    A[JSON Files\n./data/source/] --> B[extract_necessary_data\nembedding keys + user_access]
+    B --> C[convert_to_text\nkey:value formatting]
+    C --> D[split_text\n1200 chars · 200 overlap]
+    D --> E[Dense Embedding\nORTModelForFeatureExtraction\nONNX]
+    D --> F[Sparse Embedding\nSPLADE ONNX]
+    E --> G[Build Vector\nid · dense · sparse · metadata]
+    F --> G
+    G --> H{Batch full?\n≥ 25 vectors}
+    H -->|Yes| I[Upsert to Pinecone]
+    H -->|No| G
+    I --> J[(Pinecone Index)]
+```
+
+Run ingestion:
 
 ```bash
 python -m src.ingestion.main
@@ -215,9 +272,9 @@ python -m src.ingestion.main
 
 Each JSON file is processed as follows:
 
-1. Schema keys are extracted to determine what gets embedded vs. stored as metadata.
+1. Schema keys are extracted to determine what gets embedded vs. stored as metadata. Participant fields (`author`, `reviewers`, `assignee`, etc.) are collected into `user_access` for access-controlled retrieval.
 2. Content is converted to plain text and split into overlapping chunks (default: 1200 chars, 200 overlap).
-3. Each chunk is embedded with both dense and sparse models and upserted into Pinecone with source-tagged metadata.
+3. Each chunk is embedded with both dense and sparse models and upserted into Pinecone in batches of 25.
 
 Supported sources: `confluence`, `fireflies`, `github`, `gmail`, `google_drive`, `hubspot`, `jira`, `linear`, `slack`.
 
@@ -225,11 +282,26 @@ Supported sources: `confluence`, `fireflies`, `github`, `gmail`, `google_drive`,
 
 ## Retrieval Pipeline
 
+```mermaid
+flowchart TD
+    Q([User Query]) --> E[Embed Query\nDense + SPLADE Sparse]
+    E --> CH{Cache Check\nPinecone hybrid search}
+    CH -->|Score ≥ 0.9| CR([Return Cached Answer])
+    CH -->|Miss| MR[Multi-Source Retrieval\nAsync Pinecone · 9 sources · top-5 each]
+    MR --> AC[Access Control Filter\nuser_access metadata]
+    AC --> RR[Cross-Encoder Reranking\nONNX · top-10 selected]
+    RR --> CM[Adjacent Chunk Merging\npreserve document context]
+    CM --> GEN[LLM Generation\nGroq · Langfuse system prompt]
+    GEN --> SC[Store in Cache]
+    SC --> ANS([Answer + Sources + Metadata])
+    CR --> ANS
+```
+
 At query time:
 
 1. **Embedding** — the query is embedded with both the dense (ONNX) model and the SPLADE sparse model. Hybrid scores are computed with a configurable alpha (default `0.5`).
 2. **Cache lookup** — a hybrid search against the cache namespace checks for a semantically similar past query. Results above the reranker threshold (`0.9`) are returned immediately.
-3. **Multi-source retrieval** — async Pinecone queries are issued in parallel across all 9 sources (top-5 per source by default).
+3. **Multi-source retrieval** — async Pinecone queries are issued in parallel across all 9 sources (top-5 per source by default), filtered by `user_access`.
 4. **Reranking** — a cross-encoder reranker scores all retrieved chunks against the query and selects the top-N.
 5. **Chunk merging** — adjacent retrieved chunks from the same document are merged to preserve context.
 6. **Generation** — the merged context is passed to the Groq LLM with a Langfuse-managed system prompt.
@@ -238,25 +310,19 @@ At query time:
 
 ## Evaluation
 
-### Retrieval evaluation
+Evaluation is run offline against a golden dataset using DeepEval and Groq, with scores logged to Langfuse. The notebook is at `src/evaluate/enterprise-rag-evaluation.ipynb`.
 
-```bash
-python -m src.evaluate.evaluate_retrieval
-```
+### Results
 
-Computes Recall@5, Recall@10, MRR, and LLM-based contextual recall (via DeepEval + Groq). Scores are logged to Langfuse.
-
-### Generation / LLM evaluation
-
-Metrics available in `src/evaluate/llm_metrics.py`:
-
-- Contextual Recall
-- Contextual Relevancy
-- Answer Relevancy
-- Faithfulness
-- Answer Correctness (GEval)
-
-Both offline (against a golden dataset) and online (live query evaluation) modes are supported.
+| Metric | Score | Description |
+|---|---|---|
+| **Faithfulness** | **0.9370** | How factually grounded the answer is in the retrieved context |
+| **Recall@10** | **0.8860** | Fraction of relevant documents found in top-10 retrieval results |
+| **Recall@5** | **0.8860** | Fraction of relevant documents found in top-5 retrieval results |
+| **MRR** | **0.8800** | Mean Reciprocal Rank — how highly the first relevant document is ranked |
+| **Answer Relevancy** | **0.8450** | How directly the generated answer addresses the question |
+| **Context Recall** | **0.7720** | Coverage of ground-truth information in retrieved context |
+| **Answer Correctness** | **0.7420** | Factual accuracy of the answer vs. ground truth |
 
 ---
 
