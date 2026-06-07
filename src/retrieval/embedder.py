@@ -204,19 +204,25 @@ def hybrid_score_norm(dense, sparse_indices, sparse_values, alpha):
     }
     return h_dense, h_sparse
     
-def get_embeddings(dense_embedding_tokenizer, 
-                   dense_embedding_model, 
+def get_embeddings(dense_embedding_tokenizer,
+                   dense_embedding_model,
                    sparse_embedding_tokenizer,
                    sparse_embedding_model,
                    sparse_input_names,
                    text):
 
-    dense_embedding = get_dense_embedding(dense_embedding_tokenizer, dense_embedding_model, text)
-    sparse_indices, sparse_values = get_sparse_embedding(sparse_embedding_tokenizer, 
-                                                        sparse_embedding_model, 
-                                                        sparse_input_names,
-                                                        text)
+    from src.utils.metrics import EMBEDDING_LATENCY, ERROR_COUNT
 
-    hdense, hsparse = hybrid_score_norm(dense_embedding, sparse_indices, sparse_values, alpha=HYBRID_ALPHA)
+    try:
+        with EMBEDDING_LATENCY.time():
+            dense_embedding = get_dense_embedding(dense_embedding_tokenizer, dense_embedding_model, text)
+            sparse_indices, sparse_values = get_sparse_embedding(sparse_embedding_tokenizer,
+                                                                sparse_embedding_model,
+                                                                sparse_input_names,
+                                                                text)
+            hdense, hsparse = hybrid_score_norm(dense_embedding, sparse_indices, sparse_values, alpha=HYBRID_ALPHA)
+    except Exception:
+        ERROR_COUNT.labels(component="embedding").inc()
+        raise
 
     return hdense, hsparse
