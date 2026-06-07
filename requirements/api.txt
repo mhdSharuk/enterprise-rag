@@ -1,0 +1,5 @@
+-r ml.txt
+fastapi
+uvicorn[standard]
+openai
+httpx

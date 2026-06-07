@@ -1,0 +1,50 @@
+services:
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.api
+    ports:
+      - "8000:8000"
+    env_file: .env
+    volumes:
+      - model_store:/app/model_store
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s   # ONNX model loading can take up to 2 min on first cold start
+
+  ui:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.ui
+    ports:
+      - "8501:8501"
+    env_file: .env
+    environment:
+      API_URL: "http://api:8000"   # Docker service DNS; ui.py reads os.getenv("API_URL")
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # One-shot ingestion job — reuses the API image (same ML stack, no separate build).
+  # Not started by default. Run with:
+  #   docker compose --profile ingestion run --rm ingestion
+  ingestion:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.api
+    command: python -m src.ingestion.main
+    env_file: .env
+    volumes:
+      - model_store:/app/model_store   # shared with api — models download once
+      - ./data:/app/data:ro            # mount source JSON files read-only
+    profiles:
+      - ingestion
+
+volumes:
+  model_store:

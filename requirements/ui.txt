@@ -1,0 +1,5 @@
+streamlit
+httpx
+requests
+langfuse
+python-dotenv

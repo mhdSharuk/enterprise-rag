@@ -1,0 +1,27 @@
+.git/
+.env
+.venv/
+venv/
+
+# Large data / model artefacts
+data/
+model_store/
+
+# Dev / notebook artefacts
+graphify-out/
+src/evaluate/
+questions.json
+*.ipynb
+
+# Docs / non-runtime files
+README.md
+CLAUDE.md
+
+# Python byte-code
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+*.egg-info/
+dist/
+build/
