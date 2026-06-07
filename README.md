@@ -15,7 +15,7 @@ flowchart TD
     API --> Embed[Embed Query\nDense ONNX + SPLADE Sparse]
     Embed --> Cache{Semantic Cache\nPinecone + Reranker}
     Cache -->|Hit ≥ 0.9| CachedAnswer([Return Cached Answer])
-    Cache -->|Miss| Retrieve[Hybrid Retrieval\n9 sources · top-5 each · async]
+    Cache -->|Miss| Retrieve[Hybrid Retrieval\n with user metadata · async]
     Retrieve --> Rerank[Cross-Encoder Reranking\nONNX]
     Rerank --> Merge[Adjacent Chunk Merging]
     Merge --> Generate[LLM Generation\nGroq API]
@@ -287,7 +287,7 @@ flowchart TD
     Q([User Query]) --> E[Embed Query\nDense + SPLADE Sparse]
     E --> CH{Cache Check\nPinecone hybrid search}
     CH -->|Score ≥ 0.9| CR([Return Cached Answer])
-    CH -->|Miss| MR[Multi-Source Retrieval\nAsync Pinecone · 9 sources · top-5 each]
+    CH -->|Miss| MR[Multi-Source Retrieval\nAsync Pinecone]
     MR --> AC[Access Control Filter\nuser_access metadata]
     AC --> RR[Cross-Encoder Reranking\nONNX · top-10 selected]
     RR --> CM[Adjacent Chunk Merging\npreserve document context]
@@ -301,7 +301,7 @@ At query time:
 
 1. **Embedding** — the query is embedded with both the dense (ONNX) model and the SPLADE sparse model. Hybrid scores are computed with a configurable alpha (default `0.5`).
 2. **Cache lookup** — a hybrid search against the cache namespace checks for a semantically similar past query. Results above the reranker threshold (`0.9`) are returned immediately.
-3. **Multi-source retrieval** — async Pinecone queries are issued in parallel across all 9 sources (top-5 per source by default), filtered by `user_access`.
+3. **Multi-source retrieval** — async Pinecone queries are issued, filtered by `user_access`.
 4. **Reranking** — a cross-encoder reranker scores all retrieved chunks against the query and selects the top-N.
 5. **Chunk merging** — adjacent retrieved chunks from the same document are merged to preserve context.
 6. **Generation** — the merged context is passed to the Groq LLM with a Langfuse-managed system prompt.
