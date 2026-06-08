@@ -129,28 +129,22 @@ def load_sparse_embedding_model():
 
 def get_dense_embedding(tokenizer, model, text):
 
-    def mean_pooling(model_output, attention_mask):
-        token_embeddings = model_output[0]
-        input_mask_expanded = np.expand_dims(attention_mask, -1).astype(float)
-        return np.sum(token_embeddings * input_mask_expanded, 1) / np.maximum(input_mask_expanded.sum(1), 1e-9)
-
     logger.info(f'Creating dense embedding for text : {text[:30]}...')
 
     inputs = tokenizer(
-        text,
-        padding=True,
-        truncation=True,
-        max_length=512,
+        text, 
+        padding=True, 
+        truncation=True, 
+        max_length=512, 
         return_tensors="np"
     )
 
-    outputs = model(**inputs)
-    embeddings = mean_pooling(outputs, inputs['attention_mask'])
+    outputs = model(**inputs, return_dict=True).last_hidden_state
+    embeddings = outputs[:, 0]
     norm = np.linalg.norm(embeddings, axis=1, keepdims=True)
     embeddings = embeddings / norm
 
-    return embeddings
-
+    return embeddings#[0].tolist()
 
 def get_sparse_embedding(tokenizer, session, input_names, text):
     logger.info(f'Creating sparse embedding for text : {text[:30]}...')
