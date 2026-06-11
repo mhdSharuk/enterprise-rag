@@ -9,7 +9,7 @@ from src.utils.logger import logger
 from src.utils.check_device import get_onnx_provider
 from src.ingestion.config import (DENSE_EMBEDDING_MODEL, DENSE_EMBEDDING_ONNX_FILE,
                                   SPARSE_EMBEDDING_MODEL, SPARSE_EMBEDDING_ONNX_FILE,
-                                  HF_TOKEN, HYBRID_ALPHA)
+                                  HF_TOKEN)
 
 MODEL_STORE = Path("model_store")
 DENSE_EMBEDDER_PATH = MODEL_STORE / DENSE_EMBEDDING_MODEL.replace("/", "_")
@@ -180,21 +180,6 @@ def get_sparse_embedding(tokenizer, session, input_names, text):
     sparse_values = [float(val) for val in nonzero_values]
 
     return sparse_indices, sparse_values
-
-
-def hybrid_score_norm(dense, sparse_indices, sparse_values, alpha):
-    if not (0 <= alpha <= 1):
-        raise ValueError("Alpha must be between 0 and 1")
-
-    dense_arr = np.array(dense)
-    sparse_val_arr = np.array(sparse_values)
-    h_dense = (dense_arr * alpha).tolist()
-    h_sparse = {
-        "indices": sparse_indices,
-        "values": (sparse_val_arr * (1 - alpha)).tolist()
-    }
-    return h_dense, h_sparse
-
 
 def get_embeddings(dense_embedding_tokenizer,
                    dense_embedding_model,
