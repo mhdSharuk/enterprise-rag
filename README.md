@@ -316,13 +316,15 @@ Evaluation is run offline against a golden dataset using DeepEval and Groq, with
 
 | Metric | Score | Description |
 |---|---|---|
-| **Faithfulness** | **0.9370** | How factually grounded the answer is in the retrieved context |
-| **Recall@10** | **0.8860** | Fraction of relevant documents found in top-10 retrieval results |
-| **Recall@5** | **0.8860** | Fraction of relevant documents found in top-5 retrieval results |
-| **MRR** | **0.8800** | Mean Reciprocal Rank — how highly the first relevant document is ranked |
-| **Answer Relevancy** | **0.8450** | How directly the generated answer addresses the question |
-| **Context Recall** | **0.7720** | Coverage of ground-truth information in retrieved context |
-| **Answer Correctness** | **0.7420** | Factual accuracy of the answer vs. ground truth |
+| **Recall@10** | **0.902** | Fraction of relevant documents found in top-10 retrieval results |
+| **Recall@5** | **0.872** | Fraction of relevant documents found in top-5 retrieval results |
+| **MRR** | **0.764** | Mean Reciprocal Rank — how highly the first relevant document is ranked |
+| **Faithfulness** | **0.924** | How factually grounded the answer is in the retrieved context |
+| **Answer Relevancy** | **0.8658** | How directly the generated answer addresses the question |
+| **Context Recall** | **0.790** | Coverage of ground-truth information in retrieved context |
+| **Answer Correctness** | **0.753** | Factual accuracy of the answer vs. ground truth |
+
+**EDIT**: Had to rerun the entire evaluation, as there is a modification in the embedding generation using the [CLS] token instead of `mean_pooling` on the tokens in BGE models. (Referred from BGE docs [https://bge-model.com/tutorial/1_Embedding/1.2.3.html])
 
 ---
 
@@ -330,7 +332,7 @@ Evaluation is run offline against a golden dataset using DeepEval and Groq, with
 
 | Parameter | Location | Default | Description |
 |---|---|---|---|
-| `TOP_K_PER_SOURCE` | `retrieval/config.py` | `5` | Chunks retrieved per source |
+| `TOP_K_PER_SOURCE` | `retrieval/config.py` | `20` | Chunks retrieved per source |
 | `RERANK_TOP_N` | `retrieval/config.py` | `10` | Final chunks kept after reranking |
 | `HYBRID_ALPHA` | `retrieval/config.py` | `0.5` | Dense vs. sparse weight (1 = dense only) |
 | `RERANK_THRESHOLD` | `retrieval/config.py` | `0.5` | Minimum reranker score to include a chunk |
